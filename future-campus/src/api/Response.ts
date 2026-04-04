@@ -18,3 +18,46 @@ export interface RSAKeyResponse extends CommonResponse {
         publicKey: string;
     }
 }
+
+export interface ArticleResponse extends CommonResponse {
+    data: {
+        records: Article[];
+        total: number;
+        size: number;
+        current: number;
+        pages: number;
+    }
+}
+
+export interface Article {
+    id: string;
+    title: string;
+    content: string;
+    viewRange: number;
+    sendUserName: string;
+    sendUserId: number;
+    createTime: string;
+    photoUrl: string[];
+    likeCount: number;
+    heat: number;
+    tag: string[];
+}
+
+export interface School {
+    schoolId: string;
+    schoolName: string;
+}
+
+export interface SchoolListResponse extends CommonResponse {
+    data: School[];
+}
+
+export interface ArticleRequest {
+    viewRange: number;
+    tag: string[];
+    query: string;
+    schoolName: string;
+    schoolId: string;
+    pageNum: number;
+    pageSize: number;
+}

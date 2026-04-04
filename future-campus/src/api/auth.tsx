@@ -1,6 +1,6 @@
 import api from '../utils/request';
 import type { LoginProps } from '../pages/login/Login.tsx';
-import type {LoginResponse, RSAKeyResponse} from "./Response.ts";
+import type {LoginResponse, RSAKeyResponse, ArticleResponse, SchoolListResponse,ArticleRequest} from "./Response.ts";
 
 
 export interface CommonResponse {
@@ -33,6 +33,20 @@ export async function logoutApi() {
 
 export async function getRSAKeyApi():Promise<RSAKeyResponse> {
   return await api.get('/rsa/publicKey');
+}
+
+/**
+ * 获取文章列表
+ */
+export async function getArticlePageListApi(requestData: ArticleRequest):Promise<ArticleResponse> {
+  return await api.post('/article/pageList', requestData);
+}
+
+/**
+ * 获取学校列表
+ */
+export async function getSchoolListApi():Promise<SchoolListResponse> {
+  return await api.get('/school/list');
 }
 
 export async function refreshToken(){
