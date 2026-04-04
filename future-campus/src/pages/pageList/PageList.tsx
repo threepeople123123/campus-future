@@ -71,53 +71,68 @@ export default function CampusList() {
     }, [sortDescriptor]);
 
     return (
-        <div className="w-full pt-[20vh] px-[10vw] min-h-screen bg-cover bg-center bg-no-repeat"
-             style={{
-                 backgroundImage: `url('/wallhaven-qrjmgl_3840x2160.png')`,
-             }}>
-            <Table className="w-full bg-white/20 backdrop-blur-sm rounded-lg shadow-lg">
-                <Table.ScrollContainer>
-                    <Table.Content
-                        aria-label="Sortable table"
-                        className="min-w-[600px] text-gray-800"
-                        sortDescriptor={sortDescriptor}
-                        onSortChange={setSortDescriptor}
-                    >
-                        <Table.Header className="bg-white/30">
-                            <Table.Column allowsSorting isRowHeader id="name">
-                                {({sortDirection}) => (
-                                    <SortableColumnHeader sortDirection={sortDirection}>Name</SortableColumnHeader>
-                                )}
-                            </Table.Column>
-                            <Table.Column allowsSorting id="role">
-                                {({sortDirection}) => (
-                                    <SortableColumnHeader sortDirection={sortDirection}>Role</SortableColumnHeader>
-                                )}
-                            </Table.Column>
-                            <Table.Column allowsSorting id="status">
-                                {({sortDirection}) => (
-                                    <SortableColumnHeader sortDirection={sortDirection}>Status</SortableColumnHeader>
-                                )}
-                            </Table.Column>
-                            <Table.Column allowsSorting id="email">
-                                {({sortDirection}) => (
-                                    <SortableColumnHeader sortDirection={sortDirection}>Email</SortableColumnHeader>
-                                )}
-                            </Table.Column>
-                        </Table.Header>
-                        <Table.Body>
-                            {sortedUsers.map((user) => (
-                                <Table.Row key={user.id} id={user.id} className="bg-white/10 hover:bg-white/30 transition-colors">
-                                    <Table.Cell className="text-center text-gray-700 bg-transparent">{user.name}</Table.Cell>
-                                    <Table.Cell className="text-center text-gray-700 bg-transparent">{user.role}</Table.Cell>
-                                    <Table.Cell className="text-center text-gray-700 bg-transparent">{user.status}</Table.Cell>
-                                    <Table.Cell className="text-center text-gray-700 bg-transparent">{user.email}</Table.Cell>
-                                </Table.Row>
-                            ))}
-                        </Table.Body>
-                    </Table.Content>
-                </Table.ScrollContainer>
-            </Table>
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-slate-900">
+            {/* 背景动画圆圈 */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+            </div>
+            
+            {/* 主内容区域 */}
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-[10vw] py-8">
+                <Table className="w-full bg-gray-900/40 backdrop-blur-sm rounded-lg shadow-lg border border-white/10">
+                    <Table.ScrollContainer>
+                        <Table.Content
+                            aria-label="Sortable table"
+                            className="min-w-[600px] text-gray-800"
+                            sortDescriptor={sortDescriptor}
+                            onSortChange={setSortDescriptor}
+                        >
+                            <Table.Header className="bg-gray-800/50">
+                                <Table.Column allowsSorting isRowHeader id="name">
+                                    {({sortDirection}) => (
+                                        <SortableColumnHeader sortDirection={sortDirection}>
+                                            <span className="text-gray-200">Name</span>
+                                        </SortableColumnHeader>
+                                    )}
+                                </Table.Column>
+                                <Table.Column allowsSorting id="role">
+                                    {({sortDirection}) => (
+                                        <SortableColumnHeader sortDirection={sortDirection}>
+                                            <span className="text-gray-200">Role</span>
+                                        </SortableColumnHeader>
+                                    )}
+                                </Table.Column>
+                                <Table.Column allowsSorting id="status">
+                                    {({sortDirection}) => (
+                                        <SortableColumnHeader sortDirection={sortDirection}>
+                                            <span className="text-gray-200">Status</span>
+                                        </SortableColumnHeader>
+                                    )}
+                                </Table.Column>
+                                <Table.Column allowsSorting id="email">
+                                    {({sortDirection}) => (
+                                        <SortableColumnHeader sortDirection={sortDirection}>
+                                            <span className="text-gray-200">Email</span>
+                                        </SortableColumnHeader>
+                                    )}
+                                </Table.Column>
+                            </Table.Header>
+                            <Table.Body>
+                                {sortedUsers.map((user) => (
+                                    <Table.Row key={user.id} id={user.id} className="bg-gray-800/30 hover:bg-gray-700/40 transition-colors">
+                                        <Table.Cell className="text-center text-gray-300 bg-transparent">{user.name}</Table.Cell>
+                                        <Table.Cell className="text-center text-gray-300 bg-transparent">{user.role}</Table.Cell>
+                                        <Table.Cell className="text-center text-gray-300 bg-transparent">{user.status}</Table.Cell>
+                                        <Table.Cell className="text-center text-gray-300 bg-transparent">{user.email}</Table.Cell>
+                                    </Table.Row>
+                                ))}
+                            </Table.Body>
+                        </Table.Content>
+                    </Table.ScrollContainer>
+                </Table>
+            </div>
         </div>
     );
 }

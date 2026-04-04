@@ -34,3 +34,11 @@ export async function logoutApi() {
 export async function getRSAKeyApi():Promise<RSAKeyResponse> {
   return await api.get('/rsa/publicKey');
 }
+
+export async function refreshToken(){
+  return await api.post('/logout');
+}
+
+export async function publish(){
+  return await api.post('/logout');
+}

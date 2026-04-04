@@ -17,7 +17,7 @@ api.interceptors.request.use(
     // 从 Cookie 获取 token
     const token = Cookies.get('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.token = token;
     }
     return config;
   },
