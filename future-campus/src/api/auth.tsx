@@ -56,3 +56,8 @@ export async function refreshToken(){
 export async function publish(){
   return await api.post('/logout');
 }
+
+export async function getCampusList(articleRequest:ArticleRequest):Promise<ArticleResponse[]>{
+  return await api.post('/article/pageList',articleRequest);
+}
+

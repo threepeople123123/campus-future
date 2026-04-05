@@ -69,7 +69,7 @@ export function Login() {
     setLogin({...login, userName: e.target.value})
   }
 
-  function ChangeEmail({e}) {
+  function ChangeEmail(e) {
     // 判断邮箱格式是否正确
     if (!/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(e.target.value)) {
       setEmailPass(false)
@@ -106,7 +106,7 @@ export function Login() {
       const publicKeyResponse: RSAKeyResponse = await getRSAKeyApi();
 
       // 使用公钥加密密码
-      const encryptedPassword = await encryptPassword(login.password, publicKeyResponse.data.publicKey);
+      const encryptedPassword = await encryptPassword(login.password, publicKeyResponse.data);
       console.log(encryptedPassword)
 
       // 发送登录请求到后端 API（使用加密后的密码）
@@ -119,20 +119,12 @@ export function Login() {
 
       // 存储 token（如果后端返回了 token）
       if (loginResponse.code === 200) {
-        // 设置 Cookie，7 天后过期
-        Cookies.set('token', loginResponse.data.token, {
-          expires: 7, // 7 天
-          path: '/', // 全局可用
-          secure: window.location.protocol === 'https:', // HTTPS 时启用
-          sameSite: 'strict' // 防止 CSRF
-        });
-        console.log('Token 已保存到 Cookie，7 天后过期');
+        // 跳转到仪表盘页面
+        navigate('/campusList');
       } else {
         setError(loginResponse.message)
         return;
       }
-      // 跳转到仪表盘页面
-      navigate('/campusList');
 
     } catch (err) {
       console.error('登录错误:', err);
@@ -145,7 +137,7 @@ export function Login() {
   }
 
   return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100">
         {/* 背景动画圆圈 */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
@@ -158,7 +150,7 @@ export function Login() {
           <div className="backdrop-blur-xl bg-gray-900/40 rounded-3xl shadow-2xl p-8 border border-white/10">
             {/* Logo 和标题 */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-500/20 rounded-full mb-4 backdrop-blur-sm">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-sky-700/20 rounded-full mb-4 backdrop-blur-sm">
                 <svg className="w-12 h-12 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -174,7 +166,7 @@ export function Login() {
                   id="input-type-email" 
                   placeholder="xxxx@qq.com" 
                   type="email"
-                  className="bg-gray-800/50 border-gray-700 text-gray-100 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
+                  className="bg-sky-300 border-gray-700 accent-green-500 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
                   value={login?.email || ''}
                   onChange={(e) => {
                     ChangeEmail(e)
@@ -190,7 +182,7 @@ export function Login() {
                   min={0} 
                   placeholder="请输入用户名" 
                   type="string"
-                  className="bg-gray-800/50 border-gray-700 text-gray-100 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
+                  className="accent-green-400 border-gray-700 text-green-500 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
                   value={login?.userName || ''}
                   onChange={
                     (e) => {
@@ -207,7 +199,7 @@ export function Login() {
                   id="input-type-password" 
                   placeholder="••••••••" 
                   type="password"
-                  className="bg-gray-800/50 border-gray-700 text-gray-100 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
+                  className="bg-red-300 border-gray-700 text-yellow-200 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
                   value={login?.password || ''}
                   onChange={
                     (e) => {
@@ -228,7 +220,7 @@ export function Login() {
                 <Button
                   fullWidth
                   variant="primary"
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 border-0"
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-sky-500 font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 border-0"
                   isLoading={isLoading}
                   onClick={submit}
                   startContent={isLoading ? null : (
@@ -253,7 +245,7 @@ export function Login() {
   
             {/* 底部装饰 */}
             <div className="mt-6 text-center">
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-900 text-sm">
                 还没有账号？
                 <a href="/register" className="text-purple-400 font-medium hover:text-purple-300 hover:underline ml-1">立即注册</a>
               </p>

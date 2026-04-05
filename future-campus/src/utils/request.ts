@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 // 从环境变量获取配置
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888/campus/help';

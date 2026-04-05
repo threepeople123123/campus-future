@@ -14,9 +14,7 @@ export interface LoginResponse extends CommonResponse {
 }
 
 export interface RSAKeyResponse extends CommonResponse {
-    data:{
-        publicKey: string;
-    }
+    data:string;
 }
 
 export interface ArticleResponse extends CommonResponse {
@@ -60,4 +58,29 @@ export interface ArticleRequest {
     schoolId: string;
     pageNum: number;
     pageSize: number;
+}
+
+
+export interface ArticleResponse {
+    id:string;
+
+    title:string;
+
+    content:number;
+
+    viewRange:number;
+
+    sendUserName:string;
+
+    sendUserId:number;
+
+    createTime:string;
+
+    photoUrl:string[];
+
+    likeCount:number;
+
+    heat:string;
+
+    tag:string[];
 }
