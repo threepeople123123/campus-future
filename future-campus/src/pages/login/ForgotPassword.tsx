@@ -1,91 +1,36 @@
 import {useState} from 'react';
 import {Button, Input, Label, ErrorMessage} from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
-import {getRSAKeyApi, registerApi, sendEmailCode} from "../../api/auth.tsx";
-import type {LoginResponse, RSAKeyResponse,RegisterRequest} from "../../api/Response.tsx";
-import JSEncrypt from 'jsencrypt';
+import {getRSAKeyApi, sendEmailCode} from "../../api/auth.tsx";
+import type {CommonResponse} from "../../api/auth.tsx";
+import type {RSAKeyResponse, ResetPasswordRequest} from "../../api/Response.tsx";
+import JSEncrypt from "jsencrypt";
 
-
-
-
-/**
- * 使用 RSA 公钥加密密码
- */
-async function encryptPassword(password: string, publicKeyBase64: string): Promise<string> {
-  const encryptor = new JSEncrypt();
-  const pemPublicKey = `-----BEGIN PUBLIC KEY-----\n${publicKeyBase64}\n-----END PUBLIC KEY-----`;
-  encryptor.setPublicKey(pemPublicKey);
-  const encrypted = encryptor.encrypt(password);
-  
-  if (!encrypted) {
-    throw new Error('RSA encryption failed');
-  }
-  
-  return encrypted;
-}
-
-export function Register() {
+export function ForgotPassword() {
   const navigate = useNavigate();
-  const [register, setRegister] = useState<RegisterRequest>({
-    email: '', 
-    password: '', 
-    confirmPassword: '', 
-    userName: '',
-    code:''
-  });
+
+  const [resetPass, setResetPass] = useState<ResetPasswordRequest>({
+    email :"",
+    password: '',
+    confirmPassword: "",
+    verificationCode:""
+  })
   
   const [emailPass, setEmailPass] = useState<boolean>(true);
+  const [codePass, setCodePass] = useState<boolean>(true);
   const [passwordPass, setPasswordPass] = useState<boolean>(true);
-  const [userNamePass, setUserNamePass] = useState<boolean>(true);
   const [confirmPass, setConfirmPass] = useState<boolean>(true);
+  
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSendingCode, setIsSendingCode] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
-  const [sliderVerified, setSliderVerified] = useState<boolean>(false);
-  const [sliderPosition, setSliderPosition] = useState<number>(0);
-  const [isSendingCode, setIsSendingCode] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const [verificationCodePass, setVerificationCodePass] = useState<boolean>(true);
+  const [sliderVerified, setSliderVerified] = useState<boolean>(false);
+  const [sliderPosition, setSliderPosition] = useState<number>(0);
 
-  function ChangePassword(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    if (value.length < 6 || !/[0-9]/.test(value) || !/[a-z]/.test(value) || !/[A-Z]/.test(value)) {
-      setPasswordPass(false);
-    } else {
-      setPasswordPass(true);
-    }
-    
-    // 检查两次密码是否一致
-    if (register.confirmPassword && value !== register.confirmPassword) {
-      setConfirmPass(false);
-    } else {
-      setConfirmPass(true);
-    }
-    
-    setRegister({...register, password: value});
-  }
-
-  function ChangeConfirmPassword(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    if (register.password && value !== register.password) {
-      setConfirmPass(false);
-    } else {
-      setConfirmPass(true);
-    }
-    setRegister({...register, confirmPassword: value});
-  }
-
-  function ChangeUserName(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    if (value.length < 2 || value.length > 30) {
-      setUserNamePass(false);
-    } else {
-      setUserNamePass(true);
-    }
-    setRegister({...register, userName: value});
-  }
-
+  // 邮箱验证
   function ChangeEmail(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
     if (!/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(value)) {
@@ -96,7 +41,76 @@ export function Register() {
     // 邮箱改变时重置滑块验证状态
     setSliderVerified(false);
     setSliderPosition(0);
-    setRegister({...register, email: value});
+    setResetPass( {
+        ...resetPass,
+        email: value
+    })
+  }
+
+  /**
+   * 使用 RSA 公钥加密密码
+   */
+  async function encryptPassword(password: string, publicKeyBase64: string): Promise<string> {
+    const encryptor = new JSEncrypt();
+    const pemPublicKey = `-----BEGIN PUBLIC KEY-----\n${publicKeyBase64}\n-----END PUBLIC KEY-----`;
+    encryptor.setPublicKey(pemPublicKey);
+    const encrypted = encryptor.encrypt(password);
+
+    if (!encrypted) {
+      throw new Error('RSA encryption failed');
+    }
+
+    return encrypted;
+  }
+
+  // 验证码输入
+  function ChangeVerificationCode(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    if (value.length === 6 && /^\d{6}$/.test(value)) {
+      setCodePass(true);
+    } else {
+      setCodePass(false);
+    }
+    setResetPass({
+      ...resetPass,
+      verificationCode: value
+    });
+  }
+
+  // 新密码输入
+  function ChangePassword(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    if (value.length < 6 || !/[0-9]/.test(value) || !/[a-z]/.test(value) || !/[A-Z]/.test(value)) {
+      setPasswordPass(false);
+    } else {
+      setPasswordPass(true);
+    }
+    
+    // 检查两次密码是否一致
+    if (resetPass?.password && value !== resetPass.confirmPassword) {
+      setConfirmPass(false);
+    } else {
+      setConfirmPass(true);
+    }
+    setResetPass({
+      ...resetPass,
+      password: value
+    });
+  }
+
+  // 确认密码输入
+  function ChangeConfirmPassword(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    if (resetPass.password && value !== resetPass.password) {
+      setConfirmPass(false);
+    } else {
+      setConfirmPass(true);
+    }
+
+    setResetPass({
+      ...resetPass,
+      confirmPassword:value
+    })
   }
 
   // 处理滑块拖动
@@ -113,32 +127,31 @@ export function Register() {
 
   // 发送验证码
   async function sendVerificationCode() {
-    if (!emailPass || !register.email) {
+    if (!emailPass || !resetPass?.email) {
       setError('请先输入正确的邮箱地址');
-      setSuccess(''); // 清除成功消息
+      setSuccess('');
       setSliderVerified(false);
       setSliderPosition(0);
       return;
     }
 
     setIsSendingCode(true);
-    setError(''); // 清除错误消息
-    setSuccess(''); // 清除成功消息
+    setError('');
+    setSuccess('');
 
     try {
-      // 调用发送验证码接口
-      const  response = await sendEmailCode(register.email)
-      if (response.code === 200){
-        // 发送成功
+      const response: CommonResponse = await sendEmailCode(resetPass.email);
+      if (response.code === 200) {
         setSuccess(response.message);
-      }else{
+      } else {
         setError(response.message);
+        setSliderVerified(false);
+        setSliderPosition(0);
       }
-
     } catch (err) {
       console.error('发送验证码失败:', err);
       setError("发送失败");
-      setSuccess(''); // 清除成功消息
+      setSuccess('');
       setSliderVerified(false);
       setSliderPosition(0);
     } finally {
@@ -146,46 +159,30 @@ export function Register() {
     }
   }
 
-  function ChangeVerificationCode(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    // 验证码通常为6位数字
-    if (value.length === 6 && /^\d{6}$/.test(value)) {
-      setVerificationCodePass(true);
-    } else {
-      setVerificationCodePass(false);
-    }
-    setRegister({...register, verificationCode: value});
-  }
-
+  // 提交重置密码
   async function submit() {
-    // 验证所有字段
-    if (register.email === '') {
+    if (!resetPass.email) {
       setEmailPass(false);
       return;
     }
 
-    if (register.userName === '') {
-      setUserNamePass(false);
-      return;
-    }
-
-    if (register.password === '') {
-      setPasswordPass(false);
-      return;
-    }
-
-    if (register.confirmPassword === '') {
-      setConfirmPass(false);
-      return;
-    }
-
-    if (!register.verificationCode || register.verificationCode === '') {
-      setVerificationCodePass(false);
+    if (!resetPass.verificationCode) {
+      setCodePass(false);
       setError('请输入验证码');
       return;
     }
 
-    if (register.password !== register.confirmPassword) {
+    if (!resetPass.password) {
+      setPasswordPass(false);
+      return;
+    }
+
+    if (!resetPass.confirmPassword) {
+      setConfirmPass(false);
+      return;
+    }
+
+    if (resetPass.password !== resetPass.confirmPassword) {
       setConfirmPass(false);
       setError('两次输入的密码不一致');
       return;
@@ -196,35 +193,33 @@ export function Register() {
     setSuccess('');
 
     try {
+
       // 获取 RSA 公钥
       const publicKeyResponse: RSAKeyResponse = await getRSAKeyApi();
-      
+
       // 加密密码
-      const encryptedPassword = await encryptPassword(register.password, publicKeyResponse.data);
+      const encryptedPassword = await encryptPassword(resetPass.password, publicKeyResponse.data);
 
-      const encryptedConfirmPassword = await encryptPassword(register.confirmPassword, publicKeyResponse.data);
+      const encryptedConfirmPassword = await encryptPassword(resetPass.confirmPassword, publicKeyResponse.data);
 
-      //  调用注册 API
-      const registerResponse:LoginResponse = await registerApi({...register
-        , password: encryptedPassword
-        , confirmPassword:encryptedConfirmPassword})
+      // 调用重置密码接口
+      setResetPass({
+        ...resetPass,
+        password: encryptedPassword,
+        confirmPassword: encryptedConfirmPassword
+      })
 
-      if (registerResponse.code === 200) {
-        // 模拟注册成功
-        setSuccess('注册成功！即将跳转到登录页面...');
-        navigate('/login');
-      }else {
 
-        setError(registerResponse.message);
-      }
+      // 模拟重置成功
+      setSuccess('密码重置成功！即将跳转到登录页面...');
       
       setTimeout(() => {
-
+        navigate('/login');
       }, 2000);
 
     } catch (err) {
-      console.error('注册错误:', err);
-      const errorMessage = err instanceof Error ? err.message : '注册失败，请稍后重试';
+      console.error('重置密码错误:', err);
+      const errorMessage = err instanceof Error ? err.message : '重置失败，请稍后重试';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -247,28 +242,14 @@ export function Register() {
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-sky-500/20 rounded-full mb-4 backdrop-blur-sm">
               <svg className="w-12 h-12 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">创建账号</h1>
-            <p className="text-gray-600">注册智慧校园管理系统</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">忘记密码</h1>
+            <p className="text-gray-600">重置您的账户密码</p>
           </div>
 
           <div className="flex flex-col gap-5">
-            {/* 用户名输入框 */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="input-type-userName" className="text-gray-700 font-medium">用户名</Label>
-              <Input 
-                id="input-type-userName" 
-                placeholder="请输入用户名（2-30 字符）" 
-                type="text"
-                className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
-                value={register?.userName || ''}
-                onChange={ChangeUserName}
-              />
-              {!userNamePass && <ErrorMessage className="text-red-500">用户名长度为 2-30 字符</ErrorMessage>}
-            </div>
-
             {/* 邮箱输入框 */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="input-type-email" className="text-gray-700 font-medium">邮箱</Label>
@@ -277,7 +258,7 @@ export function Register() {
                 placeholder="xxxx@qq.com" 
                 type="email"
                 className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
-                value={register?.email || ''}
+                value={resetPass.email}
                 onChange={ChangeEmail}
               />
               {!emailPass && <ErrorMessage className="text-red-500">邮箱格式有误</ErrorMessage>}
@@ -350,22 +331,22 @@ export function Register() {
                 type="text"
                 maxLength={6}
                 className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
-                value={register?.verificationCode || ''}
+                value={resetPass.verificationCode}
                 onChange={ChangeVerificationCode}
               />
-              {!verificationCodePass && <ErrorMessage className="text-red-500">请输入6位数字验证码</ErrorMessage>}
+              {!codePass && <ErrorMessage className="text-red-500">请输入6位数字验证码</ErrorMessage>}
             </div>
 
-            {/* 密码输入框 */}
+            {/* 新密码输入框 */}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="input-type-password" className="text-gray-700 font-medium">密码</Label>
+              <Label htmlFor="input-type-password" className="text-gray-700 font-medium">新密码</Label>
               <div className="relative">
                 <Input 
                   id="input-type-password" 
                   placeholder="••••••••（包含大小写字母和数字）" 
                   type={showPassword ? "text" : "password"}
                   className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 pr-12 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
-                  value={register?.password || ''}
+                  value={resetPass.password}
                   onChange={ChangePassword}
                 />
                 {/* 小眼睛按钮 */}
@@ -392,14 +373,14 @@ export function Register() {
 
             {/* 确认密码输入框 */}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="input-type-confirm-password" className="text-gray-700 font-medium">确认密码</Label>
+              <Label htmlFor="input-type-confirm-password" className="text-gray-700 font-medium">确认新密码</Label>
               <div className="relative">
                 <Input 
                   id="input-type-confirm-password" 
                   placeholder="••••••••" 
                   type={showConfirmPassword ? "text" : "password"}
                   className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 pr-12 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
-                  value={register?.confirmPassword || ''}
+                  value={resetPass.confirmPassword}
                   onChange={ChangeConfirmPassword}
                 />
                 {/* 小眼睛按钮 */}
@@ -438,8 +419,8 @@ export function Register() {
               </div>
             )}
 
-            {/* 注册按钮 */}
-            {(passwordPass && emailPass && userNamePass && confirmPass && sliderVerified && verificationCodePass) ? (
+            {/* 重置密码按钮 */}
+            {(emailPass && sliderVerified && codePass && passwordPass && confirmPass) ? (
               <Button
                 fullWidth
                 variant="primary"
@@ -448,11 +429,11 @@ export function Register() {
                 onClick={submit}
                 startContent={isLoading ? null : (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 )}
               >
-                {isLoading ? '注册中...' : '注册'}
+                {isLoading ? '重置中...' : '重置密码'}
               </Button>
             ) : (
               <Button
@@ -461,7 +442,7 @@ export function Register() {
                 variant="primary"
                 className="w-full bg-gray-300/50 text-gray-500 font-semibold py-3 px-4 rounded-lg cursor-not-allowed border-0"
               >
-                注册
+                重置密码
               </Button>
             )}
           </div>
@@ -469,8 +450,8 @@ export function Register() {
           {/* 底部装饰 */}
           <div className="mt-6 text-center">
             <p className="text-gray-600 text-sm">
-              已有账号？
-              <a href="/login" className="text-sky-600 font-medium hover:text-sky-700 hover:underline ml-1">立即登录</a>
+              想起密码了？
+              <a href="/login" className="text-sky-600 font-medium hover:text-sky-700 hover:underline ml-1">返回登录</a>
             </p>
           </div>
         </div>

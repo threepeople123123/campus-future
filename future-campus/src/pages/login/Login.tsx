@@ -2,15 +2,13 @@ import {useState} from 'react';
 import {Button, Input, Label, ErrorMessage} from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
 import {getRSAKeyApi, loginApi} from "../../api/auth.tsx";
-import type {LoginResponse, RSAKeyResponse} from "../../api/Response.ts";
+import type {LoginResponse, RSAKeyResponse} from "../../api/Response.tsx";
 import JSEncrypt from 'jsencrypt';
-import Cookies from 'js-cookie';
 
 
 export interface LoginProps {
   email:string
   password:string
-  userName:string
 }
 
 /**
@@ -42,12 +40,12 @@ async function encryptPassword(password: string, publicKeyBase64: string): Promi
 export function Login() {
 
   const navigate = useNavigate();
-  const [login, setLogin] = useState<LoginProps>({email: '', password: '', userName: ''});
+  const [login, setLogin] = useState<LoginProps>({email: '', password: ''});
   const [emailPass, setEmailPass] = useState<boolean>(true);
   const [passwordPass, setPasswordPass] = useState<boolean>(true);
-  const [userNamePass, setUserNamePass] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   function ChangePassword(e) {
     //判断密码是否过于弱，并且包含数字字母和大小写字母
@@ -59,15 +57,6 @@ export function Login() {
     setLogin({...login, password: e.target.value})
   }
 
-  function ChangeUserName(e) {
-    //判断密码是否过于弱，并且包含数字字母和大小写字母
-    if (e.target.value.length < 0 || e.target.value.length > 30) {
-      setUserNamePass(false)
-    } else {
-      setUserNamePass(true)
-    }
-    setLogin({...login, userName: e.target.value})
-  }
 
   function ChangeEmail(e) {
     // 判断邮箱格式是否正确
@@ -87,10 +76,7 @@ export function Login() {
       return;
     }
 
-    if (login.userName === '') {
-      setUserNamePass(false)
-      return;
-    }
+
 
     if (login.password === '') {
       setPasswordPass(false)
@@ -140,87 +126,89 @@ export function Login() {
       <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100">
         {/* 背景动画圆圈 */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-sky-200/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl animate-pulse delay-500"></div>
         </div>
         
         {/* 玻璃态卡片 */}
         <div className="relative z-10 w-full max-w-md mx-4">
-          <div className="backdrop-blur-xl bg-gray-900/40 rounded-3xl shadow-2xl p-8 border border-white/10">
+          <div className="backdrop-blur-xl bg-white/40 rounded-3xl shadow-2xl p-8 border border-white/30">
             {/* Logo 和标题 */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-sky-700/20 rounded-full mb-4 backdrop-blur-sm">
-                <svg className="w-12 h-12 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-sky-500/20 rounded-full mb-4 backdrop-blur-sm">
+                <svg className="w-12 h-12 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold text-gray-100 mb-2">欢迎回来</h1>
-              <p className="text-gray-400">登录到智慧校园管理系统</p>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">欢迎回来</h1>
+              <p className="text-gray-600">登录到智慧校园管理系统</p>
             </div>
   
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="input-type-email" className="text-gray-300 font-medium">邮箱</Label>
+                <Label htmlFor="input-type-email" className="text-gray-700 font-medium">邮箱</Label>
                 <Input 
                   id="input-type-email" 
                   placeholder="xxxx@qq.com" 
                   type="email"
-                  className="bg-sky-300 border-gray-700 accent-green-500 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
+                  className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
                   value={login?.email || ''}
                   onChange={(e) => {
                     ChangeEmail(e)
                   }}
                 />
-                {!emailPass && <ErrorMessage className="text-red-400">邮箱格式有误</ErrorMessage>}
+                {!emailPass && <ErrorMessage className="text-red-500">邮箱格式有误</ErrorMessage>}
               </div>
               
               <div className="flex flex-col gap-2">
-                <Label htmlFor="input-type-userName" className="text-gray-300 font-medium">用户名</Label>
-                <Input 
-                  id="input-type-userName" 
-                  min={0} 
-                  placeholder="请输入用户名" 
-                  type="string"
-                  className="accent-green-400 border-gray-700 text-green-500 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
-                  value={login?.userName || ''}
-                  onChange={
-                    (e) => {
-                      ChangeUserName(e)
+                <Label htmlFor="input-type-password" className="text-gray-700 font-medium">密码</Label>
+                <div className="relative">
+                  <Input 
+                    id="input-type-password" 
+                    placeholder="••••••••" 
+                    type={showPassword ? "text" : "password"}
+                    className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 pr-12 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
+                    value={login?.password || ''}
+                    onChange={
+                      (e) => {
+                        ChangePassword(e)
+                      }
                     }
-                  }
-                />
-                {!userNamePass && <ErrorMessage className="text-red-400">用户名不能为空，并且不能大于 30 字符</ErrorMessage>}
-              </div>
-              
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="input-type-password" className="text-gray-300 font-medium">密码</Label>
-                <Input 
-                  id="input-type-password" 
-                  placeholder="••••••••" 
-                  type="password"
-                  className="bg-red-300 border-gray-700 text-yellow-200 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
-                  value={login?.password || ''}
-                  onChange={
-                    (e) => {
-                      ChangePassword(e)
-                    }
-                  }
-                />
-                {!passwordPass && <ErrorMessage className="text-red-400">密码必须包含大小写字母和数字</ErrorMessage>}
+                  />
+                  {/* 小眼睛按钮 */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200/50 rounded transition-colors duration-200"
+                    aria-label={showPassword ? "隐藏密码" : "显示密码"}
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {!passwordPass && <ErrorMessage className="text-red-500">密码必须包含大小写字母和数字</ErrorMessage>}
               </div>
   
               {error && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 backdrop-blur-sm">
-                  <ErrorMessage className="text-red-400 text-sm">{error}</ErrorMessage>
+                  <ErrorMessage className="text-red-600 text-sm">{error}</ErrorMessage>
                 </div>
               )}
   
-              {(passwordPass && emailPass && userNamePass) ? (
+              {(passwordPass && emailPass) ? (
                 <Button
                   fullWidth
                   variant="primary"
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-sky-500 font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 border-0"
+                  className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 border-0"
                   isLoading={isLoading}
                   onClick={submit}
                   startContent={isLoading ? null : (
@@ -236,7 +224,7 @@ export function Login() {
                   isDisabled
                   fullWidth
                   variant="primary"
-                  className="w-full bg-gray-700/50 text-gray-400 font-semibold py-3 px-4 rounded-lg cursor-not-allowed border-0"
+                  className="w-full bg-gray-300/50 text-gray-500 font-semibold py-3 px-4 rounded-lg cursor-not-allowed border-0"
                 >
                   登录
                 </Button>
@@ -245,9 +233,12 @@ export function Login() {
   
             {/* 底部装饰 */}
             <div className="mt-6 text-center">
-              <p className="text-gray-900 text-sm">
+              <p className="text-gray-600 text-sm mb-2">
                 还没有账号？
-                <a href="/register" className="text-purple-400 font-medium hover:text-purple-300 hover:underline ml-1">立即注册</a>
+                <a href="/register" className="text-sky-600 font-medium hover:text-sky-700 hover:underline ml-1">立即注册</a>
+              </p>
+              <p className="text-gray-600 text-sm">
+                <a href="/forgot-password" className="text-sky-600 font-medium hover:text-sky-700 hover:underline">忘记密码？</a>
               </p>
             </div>
           </div>

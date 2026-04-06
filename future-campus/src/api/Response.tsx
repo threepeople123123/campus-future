@@ -84,3 +84,19 @@ export interface ArticleResponse {
 
     tag:string[];
 }
+
+
+export interface RegisterRequest {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    userName: string;
+    verificationCode?: string;
+}
+
+export interface ResetPasswordRequest {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    verificationCode: string;
+}

@@ -1,10 +1,9 @@
 import type {SortDescriptor} from "@heroui/react";
-
-import {Pagination, Table, cn} from "@heroui/react";
+import {cn, ComboBox, Input, Label, ListBox, Pagination, Table} from "@heroui/react";
 import {Icon} from "@iconify/react";
-import {useEffect, useState} from "react";
+import {type Key, useEffect, useState} from "react";
 import {getCampusList} from "../../api/auth.tsx";
-import type {ArticleRequest, ArticleResponse} from "../../api/Response.ts";
+import type {ArticleRequest, ArticleResponse} from "../../api/Response.tsx";
 
 
 function SortableColumnHeader({
@@ -30,41 +29,100 @@ function SortableColumnHeader({
     );
 }
 
+interface PageSizeConstant {
+    id: string;
+    name: string;
+    value: number;
+}
+
+const pageSizeConstont : PageSizeConstant[] = [
+    {
+        id: "ten",
+        name: "10页条",
+        value : 10
+    },
+    {
+        id: "twenty",
+        name: "20页条",
+        value :20
+    },
+    {
+        id: "thirty",
+        name: "30页条",
+        value : 30
+    },
+    {
+        id: "forty",
+        name: "40页条",
+        value : 40
+    },
+    {
+        id: "fifty",
+        name: "50页条",
+        value : 50
+    },
+];
+
 export default function CampusList() {
     const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
         column: "name",
         direction: "ascending",
     });
 
-    const [page, setPage] = useState(1);
-    const totalPages = 12;
+    const [campusList,setCampusList] = useState<ArticleResponse[]>([])
+
+    const [pageNum, setPageNum] = useState(1);
+    const [pageSize,setPageSize]  = useState(pageSizeConstont[0].value);
+    const totalPages = 1;
+
+
+    const [selectedKey, setSelectedKey] = useState<Key | null>("ten");
+    const selectedNum = pageSizeConstont.find((a) => a.id === selectedKey);
+
+    function changeOpinion(key){
+        setSelectedKey(key)
+        setPageSize(selectedNum.value)
+    }
+
+
     const getPageNumbers = () => {
+        // 如果总页数为 0 或 1，只返回 [1]
+        if (totalPages <= 1) {
+            return [1];
+        }
+
         const pages: (number | "ellipsis")[] = [];
         pages.push(1);
-        if (page > 3) {
+        if (pageNum > 3) {
             pages.push("ellipsis");
         }
-        const start = Math.max(2, page - 1);
-        const end = Math.min(totalPages - 1, page + 1);
+        const start = Math.max(2, pageNum - 1);
+        const end = Math.min(totalPages - 1, pageNum + 1);
         for (let i = start; i <= end; i++) {
             pages.push(i);
         }
-        if (page < totalPages - 2) {
+        if (pageNum < totalPages - 2) {
             pages.push("ellipsis");
         }
         pages.push(totalPages);
         return pages;
     };
 
-    const [campusList,setCampusList] = useState<ArticleResponse[]>([])
+    function previous(){
+        setPageNum(pageNum - 1)
+    }
+
+
+    function next(){
+        setPageNum(pageNum + 1)
+    }
 
     useEffect(()=>{
-
         async function fetchCampusList() {
             try {
                 const articleRequest : ArticleRequest =  {
-                    pageNum:1,
-                    pageSize:10
+                    pageNum:pageNum,
+                    pageSize:pageSize
                 }
                 const articleList: ArticleResponse[] = await getCampusList(articleRequest);
                 setCampusList(articleList);
@@ -72,9 +130,8 @@ export default function CampusList() {
                 console.error('获取列表失败:', error);
             }
         }
-
         fetchCampusList();
-    },[])
+    },[pageNum,pageSize])
 
     return (
 
@@ -101,7 +158,7 @@ export default function CampusList() {
                                     <Table.Column allowsSorting isRowHeader id="name">
                                         {({sortDirection}) => (
                                             <SortableColumnHeader sortDirection={sortDirection}>
-                                                <span className="text-gray-200">标题</span>
+                                                <span className="text-gray-200"></span>
                                             </SortableColumnHeader>
                                         )}
                                     </Table.Column>
@@ -131,9 +188,9 @@ export default function CampusList() {
                     <Pagination className="justify-center">
                         <Pagination.Content>
                             <Pagination.Item>
-                                <Pagination.Previous isDisabled={page === 1} onPress={() => setPage((p) => p - 1)}>
+                                <Pagination.Previous isDisabled={pageNum === 1} onPress={() => previous()}>
                                     <Pagination.PreviousIcon />
-                                    <span>Previous</span>
+                                    <span>上一页</span>
                                 </Pagination.Previous>
                             </Pagination.Item>
                             {getPageNumbers().map((p, i) =>
@@ -143,19 +200,46 @@ export default function CampusList() {
                                     </Pagination.Item>
                                 ) : (
                                     <Pagination.Item key={p}>
-                                        <Pagination.Link isActive={p === page} onPress={() => setPage(p)}>
+                                        <Pagination.Link isActive={p === pageNum} onPress={() => setPageNum(p)}>
                                             {p}
                                         </Pagination.Link>
                                     </Pagination.Item>
                                 ),
                             )}
                             <Pagination.Item>
-                                <Pagination.Next isDisabled={page === totalPages} onPress={() => setPage((p) => p + 1)}>
-                                    <span>Next</span>
+                                <Pagination.Next isDisabled={pageNum === totalPages} onPress={() => next()}>
+                                    <span>下一页</span>
                                     <Pagination.NextIcon />
                                 </Pagination.Next>
                             </Pagination.Item>
                         </Pagination.Content>
+
+                        <span className="">
+                        <ComboBox
+                            className="w-[256px]"
+                            selectedKey={selectedKey}
+                            onSelectionChange={(key) =>{
+                                changeOpinion(key)
+                            }}
+                        >
+                            <Label></Label>
+                            <ComboBox.InputGroup>
+                                <Input placeholder="Search animals..." />
+                                <ComboBox.Trigger />
+                            </ComboBox.InputGroup>
+                            <ComboBox.Popover>
+                                <ListBox>
+                                    {pageSizeConstont.map((number) => (
+                                        <ListBox.Item key={number.id} id={number.id} textValue={number.name}>
+                                            {number.name}
+                                            <ListBox.ItemIndicator />
+                                        </ListBox.Item>
+                                    ))}
+                                </ListBox>
+                            </ComboBox.Popover>
+                        </ComboBox>
+
+                        </span>
                     </Pagination>
                 </div>
             </div>

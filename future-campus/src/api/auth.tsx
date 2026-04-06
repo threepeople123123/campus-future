@@ -1,6 +1,6 @@
 import api from '../utils/request';
 import type { LoginProps } from '../pages/login/Login.tsx';
-import type {LoginResponse, RSAKeyResponse, ArticleResponse, SchoolListResponse,ArticleRequest} from "./Response.ts";
+import type {LoginResponse, RSAKeyResponse, ArticleResponse, SchoolListResponse,ArticleRequest,RegisterRequest} from "./Response.tsx";
 
 
 export interface CommonResponse {
@@ -15,6 +15,13 @@ export interface CommonResponse {
  */
 export async function loginApi(loginData: LoginProps): Promise<LoginResponse> {
   return await api.post('/login/login', loginData);
+}
+
+/**
+ * 用户登录
+ */
+export async function registerApi(registerRequest: RegisterRequest): Promise<LoginResponse> {
+  return await api.post('/login/register', registerRequest);
 }
 
 /**
@@ -59,5 +66,9 @@ export async function publish(){
 
 export async function getCampusList(articleRequest:ArticleRequest):Promise<ArticleResponse[]>{
   return await api.post('/article/pageList',articleRequest);
+}
+
+export async function sendEmailCode(email:string):Promise<CommonResponse>{
+  return await api.get('/login/sendCode', { params: { email } });
 }
 
