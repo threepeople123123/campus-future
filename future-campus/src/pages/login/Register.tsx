@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {Button, Input, Label, ErrorMessage} from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
-import {getRSAKeyApi, registerApi, sendEmailCode} from "../../api/auth.tsx";
+import {getRSAKeyApi, registerApi, sendEmailCode} from "../../api/api.tsx";
 import type {LoginResponse, RSAKeyResponse,RegisterRequest} from "../../api/Response.tsx";
 import JSEncrypt from 'jsencrypt';
 

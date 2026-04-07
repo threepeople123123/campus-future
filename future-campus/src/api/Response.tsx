@@ -1,4 +1,4 @@
-import type {CommonResponse} from "./auth.tsx";
+import type {CommonResponse} from "./api.tsx";
 
 export interface LoginResponse extends CommonResponse {
     data : {
@@ -99,4 +99,10 @@ export interface ResetPasswordRequest {
     password: string;
     confirmPassword: string;
     verificationCode: string;
+}
+
+export interface PopularTag extends CommonResponse {
+    id:number;
+    tagName:string;
+    hot:number;
 }

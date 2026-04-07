@@ -1,9 +1,9 @@
 import {useState} from 'react';
-import {Button, Input, Label, ErrorMessage} from "@heroui/react";
-import { useNavigate } from 'react-router-dom';
-import {getRSAKeyApi, sendEmailCode} from "../../api/auth.tsx";
-import type {CommonResponse} from "../../api/auth.tsx";
-import type {RSAKeyResponse, ResetPasswordRequest} from "../../api/Response.tsx";
+import {Button, ErrorMessage, Input, Label} from "@heroui/react";
+import {useNavigate} from 'react-router-dom';
+import type {CommonResponse} from "../../api/api.tsx";
+import {getRSAKeyApi, resetPasswordApi, sendEmailCode} from "../../api/api.tsx";
+import type {ResetPasswordRequest, RSAKeyResponse} from "../../api/Response.tsx";
 import JSEncrypt from "jsencrypt";
 
 export function ForgotPassword() {
@@ -29,6 +29,7 @@ export function ForgotPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [sliderVerified, setSliderVerified] = useState<boolean>(false);
   const [sliderPosition, setSliderPosition] = useState<number>(0);
+  const [countdown, setCountdown] = useState<number>(0);
 
   // 邮箱验证
   function ChangeEmail(e: React.ChangeEvent<HTMLInputElement>) {
@@ -119,7 +120,7 @@ export function ForgotPassword() {
     setSliderPosition(value);
     
     // 当滑块滑到底部（>= 95%）时触发验证
-    if (value >= 95 && !sliderVerified) {
+    if (value >= 95 && !sliderVerified && countdown === 0) {
       setSliderVerified(true);
       sendVerificationCode();
     }
@@ -143,6 +144,17 @@ export function ForgotPassword() {
       const response: CommonResponse = await sendEmailCode(resetPass.email);
       if (response.code === 200) {
         setSuccess(response.message);
+        // 开始60秒倒计时
+        setCountdown(60);
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       } else {
         setError(response.message);
         setSliderVerified(false);
@@ -199,23 +211,29 @@ export function ForgotPassword() {
 
       // 加密密码
       const encryptedPassword = await encryptPassword(resetPass.password, publicKeyResponse.data);
+      console.log(publicKeyResponse.data)
 
       const encryptedConfirmPassword = await encryptPassword(resetPass.confirmPassword, publicKeyResponse.data);
 
-      // 调用重置密码接口
-      setResetPass({
-        ...resetPass,
+      const resetPassRequest: ResetPasswordRequest = {
+        email: resetPass.email,
         password: encryptedPassword,
-        confirmPassword: encryptedConfirmPassword
-      })
+        confirmPassword: encryptedConfirmPassword,
+        verificationCode: resetPass.verificationCode
+      };
 
 
-      // 模拟重置成功
-      setSuccess('密码重置成功！即将跳转到登录页面...');
-      
-      setTimeout(() => {
+      const response: CommonResponse = await resetPasswordApi(resetPassRequest);
+      if (response.code === 200) {
+        // 模拟重置成功
+        setSuccess('密码重置成功！即将跳转到登录页面...');
+
         navigate('/login');
-      }, 2000);
+      }else {
+        setError(response.message);
+      }
+
+
 
     } catch (err) {
       console.error('重置密码错误:', err);
@@ -266,7 +284,14 @@ export function ForgotPassword() {
 
             {/* 滑动验证码 */}
             <div className="flex flex-col gap-2">
-              <Label className="text-gray-700 font-medium">滑动验证</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-gray-700 font-medium">滑动验证</Label>
+                {countdown > 0 && (
+                  <span className="text-sm text-sky-600 font-medium">
+                    {countdown}秒后可重新发送
+                  </span>
+                )}
+              </div>
               <div className="relative bg-gray-200/60 rounded-lg h-12 overflow-hidden border border-gray-300">
                 {/* 进度条背景 */}
                 <div 
@@ -281,7 +306,7 @@ export function ForgotPassword() {
                   <span className={`text-sm font-medium transition-colors duration-200 ${
                     sliderVerified ? 'text-green-600' : 'text-gray-500'
                   }`}>
-                    {sliderVerified ? '✓ 验证成功' : isSendingCode ? '发送中...' : '→ 滑动发送验证码'}
+                    {sliderVerified ? '✓ 验证成功' : isSendingCode ? '发送中...' : countdown > 0 ? `${countdown}秒后重试` : '→ 滑动发送验证码'}
                   </span>
                 </div>
                 
@@ -292,7 +317,7 @@ export function ForgotPassword() {
                   max="100"
                   value={sliderPosition}
                   onChange={handleSliderChange}
-                  disabled={sliderVerified || isSendingCode}
+                  disabled={sliderVerified || isSendingCode || countdown > 0}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                 />
                 

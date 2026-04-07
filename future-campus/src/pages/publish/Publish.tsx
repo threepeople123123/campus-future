@@ -1,4 +1,4 @@
-import {useState, useRef} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import {
   Button,
   Input,
@@ -6,15 +6,21 @@ import {
   ErrorMessage,
   TextArea,
   Select,
-  ListBox
+  ListBox,
+  TagGroup,
+  Tag,
+  Description
 } from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
-
+import {getPopularTag, publishArticle} from "../../api/api.tsx";
+import type {PopularTag} from "../../api/Response.tsx";
+import type {Key} from "@heroui/react";
 export interface PublishProps {
   title: string;
   content: string;
   visibility: string;
   imageUrls: string[];
+  tags: PopularTag[];
 }
 
 interface VisibilityOption {
@@ -36,7 +42,8 @@ export function Publish() {
     title: '',
     content: '',
     visibility: 'all',
-    imageUrls: []
+    imageUrls: [],
+    tags: PopularTag[]
   });
   
   const [titlePass, setTitlePass] = useState<boolean>(true);
@@ -46,6 +53,9 @@ export function Publish() {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState<string>('');
+  const [popularTags, setPopularTags] = useState<PopularTag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Iterable<Key>>(new Set([]));
 
   function ChangeTitle(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
@@ -154,6 +164,73 @@ export function Publish() {
     fileInputRef.current?.click();
   }
 
+  // 处理标签输入
+  function handleTagInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setTagInput(e.target.value);
+  }
+
+  // 添加标签
+  function addTag(e?: React.KeyboardEvent<HTMLInputElement>) {
+    if (e && e.key !== 'Enter') return;
+    
+    const tag = tagInput.trim();
+    
+    // 验证标签
+    if (!tag) return;
+    if (tag.length > 20) {
+      setError('标签长度不能超过 20 个字符');
+      return;
+    }
+    if (publish.tags.includes(tag)) {
+      setError('标签已存在');
+      return;
+    }
+    if (publish.tags.length >= 10) {
+      setError('最多只能添加 10 个标签');
+      return;
+    }
+
+    // 添加标签
+    setPublish({...publish, tags: [...publish.tags, tag]});
+    setTagInput('');
+    setError('');
+  }
+
+  // 删除标签
+  function removeTag(index: number) {
+    const removedTag = publish.tags[index];
+    const newTags = publish.tags.filter((_, i) => i !== index);
+    setPublish({...publish, tags: newTags});
+    
+    // 如果删除的标签在热门标签中，同步更新热门标签的选中状态
+    const isPopularTag = popularTags.some(tag => tag.tagName === removedTag);
+    if (isPopularTag) {
+      const newSelectedTags = new Set(Array.from(selectedTags).filter(key => key !== removedTag));
+      setSelectedTags(newSelectedTags);
+    }
+  }
+
+  // 处理热门标签选择变化
+  function handleTagSelectionChange(keys: Iterable<Key>) {
+    setSelectedTags(keys);
+    
+    // 将选中的热门标签添加到文章标签中
+    const selectedKeysArray = Array.from(keys);
+    const selectedTagNames = selectedKeysArray.map(key => {
+      const tag = popularTags.find(t => t.tagName === key);
+      return tag ? tag.tagName : String(key);
+    });
+    
+    // 限制最多10个标签
+    if (selectedTagNames.length <= 10) {
+      setPublish({...publish, tags: selectedTagNames});
+    } else {
+      setError('最多只能添加 10 个标签');
+      // 保持之前的选择
+      setSelectedTags(new Set(publish.tags));
+    }
+  }
+
   async function submit() {
     // 验证必填字段
     if (publish.title === '') {
@@ -175,7 +252,11 @@ export function Publish() {
       console.log('发布信息:', publish);
       
       // 模拟发布
-      publish()
+      const publishArticleResponse =   await publishArticle({
+        ...publish,
+        tags: Array.from(selectedTags),
+        imageUrls: publish.imageUrls.map(url => ({url}))
+      })
       
       setSuccess('发布成功！即将跳转到列表页...');
 
@@ -189,6 +270,19 @@ export function Publish() {
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    const fetchPopularTags = async () => {
+      try {
+        const tags = await getPopularTag();
+        console.log('热门标签:', tags.data);
+        setPopularTags(tags.data);
+      } catch (err) {
+        console.error('获取热门标签错误:', err);
+      }
+    };
+    fetchPopularTags();
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100">
@@ -269,6 +363,79 @@ export function Publish() {
                 </Select.Popover>
               </Select>
             </div>
+
+            {/* 标签输入 */}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="input-tags" className="text-gray-700 font-medium">标签</Label>
+              <div className="space-y-3">
+                {/* 标签输入框 */}
+                <Input 
+                  id="input-tags" 
+                  placeholder="输入标签后按回车添加（最多 10 个）" 
+                  type="text"
+                  value={tagInput}
+                  onChange={handleTagInputChange}
+                  onKeyDown={addTag}
+                  className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
+                />
+                
+                {/* 标签列表 */}
+                {publish.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {publish.tags.map((tag, index) => (
+                      <div 
+                        key={index}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-sky-500/20 text-sky-700 rounded-full text-sm border border-sky-500/30 hover:bg-sky-500/30 transition-colors duration-200"
+                      >
+                        <span>#{tag}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeTag(index)}
+                          className="hover:text-red-500 transition-colors duration-200"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* 标签数量提示 */}
+                <p className="text-xs text-gray-500">
+                  已添加 {publish.tags.length}/10 个标签
+                </p>
+              </div>
+            </div>
+
+            {/* 热门标签 */}
+            {popularTags.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <TagGroup
+                  selectedKeys={selectedTags}
+                  selectionMode="multiple"
+                  onSelectionChange={handleTagSelectionChange}
+                >
+                  <Label className="text-gray-700 font-medium">热门标签</Label>
+                  <TagGroup.List className="flex flex-wrap gap-2">
+                    {popularTags.map((tag) => (
+                      <Tag 
+                        key={tag.tagName} 
+                        id={tag.tagName}
+                        className="cursor-pointer"
+                      >
+                        {tag.tagName}
+                      </Tag>
+                    ))}
+                  </TagGroup.List>
+                  <Description className="text-xs text-gray-500 mt-1">
+                    已选择: {Array.from(selectedTags).length > 0 ? Array.from(selectedTags).join(", ") : "无"}
+                  </Description>
+                </TagGroup>
+              </div>
+            )}
+
 
             {/* 图片上传 */}
             <div className="flex flex-col gap-2">

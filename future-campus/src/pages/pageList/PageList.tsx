@@ -2,7 +2,7 @@ import type {SortDescriptor} from "@heroui/react";
 import {cn, ComboBox, Input, Label, ListBox, Pagination, Table} from "@heroui/react";
 import {Icon} from "@iconify/react";
 import {type Key, useEffect, useState} from "react";
-import {getCampusList} from "../../api/auth.tsx";
+import {getCampusList} from "../../api/api.tsx";
 import type {ArticleRequest, ArticleResponse} from "../../api/Response.tsx";
 
 

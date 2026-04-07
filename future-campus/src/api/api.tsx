@@ -1,6 +1,14 @@
 import api from '../utils/request';
 import type { LoginProps } from '../pages/login/Login.tsx';
-import type {LoginResponse, RSAKeyResponse, ArticleResponse, SchoolListResponse,ArticleRequest,RegisterRequest} from "./Response.tsx";
+import type {
+  LoginResponse,
+  RSAKeyResponse,
+  ArticleResponse,
+  SchoolListResponse,
+  ArticleRequest,
+  RegisterRequest,
+  ResetPasswordRequest, PopularTag
+} from "./Response.tsx";
 
 
 export interface CommonResponse {
@@ -22,6 +30,11 @@ export async function loginApi(loginData: LoginProps): Promise<LoginResponse> {
  */
 export async function registerApi(registerRequest: RegisterRequest): Promise<LoginResponse> {
   return await api.post('/login/register', registerRequest);
+}
+
+
+export async function resetPasswordApi(resetPasswordRequest:ResetPasswordRequest): Promise<CommonResponse> {
+  return await api.post('/login/resetPassword',resetPasswordRequest);
 }
 
 /**
@@ -70,5 +83,13 @@ export async function getCampusList(articleRequest:ArticleRequest):Promise<Artic
 
 export async function sendEmailCode(email:string):Promise<CommonResponse>{
   return await api.get('/login/sendCode', { params: { email } });
+}
+
+export async function getPopularTag():Promise<PopularTag[]>{
+  return await api.get('/tag/getPopularTag');
+}
+
+export async function publishArticle():Promise<PopularTag[]>{
+  return await api.get('/article/publishArticle');
 }
 
