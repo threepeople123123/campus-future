@@ -138,15 +138,15 @@ export default function CampusList() {
         <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100">
             {/* 背景动画圆圈 */}
             <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-sky-200/30 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl animate-pulse delay-500"></div>
             </div>
 
             {/* 主内容区域 */}
             <div className="relative z-10 flex flex-col items-center justify-start min-h-screen py-8 px-[10vw]">
                 <div className="w-full max-w-7xl">
-                    <Table className="w-full bg-gray-900/40 backdrop-blur-sm rounded-lg shadow-lg border border-white/10">
+                    <Table className="w-full bg-white/40 backdrop-blur-sm rounded-lg shadow-lg border border-white/30">
                         <Table.ScrollContainer>
                             <Table.Content
                                 aria-label="Sortable table"
@@ -154,11 +154,11 @@ export default function CampusList() {
                                 sortDescriptor={sortDescriptor}
                                 onSortChange={setSortDescriptor}
                             >
-                                <Table.Header className="bg-gray-800/50">
+                                <Table.Header className="bg-sky-500/10">
                                     <Table.Column allowsSorting isRowHeader id="name">
                                         {({sortDirection}) => (
                                             <SortableColumnHeader sortDirection={sortDirection}>
-                                                <span className="text-gray-200"></span>
+                                                <span className="text-gray-700 font-medium">标题</span>
                                             </SortableColumnHeader>
                                         )}
                                     </Table.Column>
@@ -166,13 +166,13 @@ export default function CampusList() {
                                 <Table.Body>
                                     {campusList.length > 0 ? (
                                         campusList.map((campus) => (
-                                            <Table.Row key={campus.id} id={campus.id} className="bg-gray-800/30 hover:bg-gray-700/40 transition-colors">
-                                                <Table.Cell className="text-center text-gray-300 bg-transparent">{campus.title}</Table.Cell>
+                                            <Table.Row key={campus.id} id={campus.id} className="bg-white/30 hover:bg-sky-100/50 transition-colors">
+                                                <Table.Cell className="text-center text-gray-700 bg-transparent">{campus.title}</Table.Cell>
                                             </Table.Row>
                                         ))
                                     ) : (
                                         <Table.Row>
-                                            <Table.Cell className="text-center text-gray-400 py-8">
+                                            <Table.Cell className="text-center text-gray-500 py-8">
                                                 暂无数据
                                             </Table.Cell>
                                         </Table.Row>

@@ -191,61 +191,61 @@ export function Publish() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100">
       {/* 背景动画圆圈 */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-sky-200/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* 玻璃态卡片 */}
       <div className="relative z-10 w-full max-w-3xl mx-4 my-8">
-        <div className="backdrop-blur-xl bg-gray-900/40 rounded-3xl shadow-2xl p-8 border border-white/10">
+        <div className="backdrop-blur-xl bg-white/40 rounded-3xl shadow-2xl p-8 border border-white/30">
           {/* Logo 和标题 */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-500/20 rounded-full mb-4 backdrop-blur-sm">
-              <svg className="w-12 h-12 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-sky-500/20 rounded-full mb-4 backdrop-blur-sm">
+              <svg className="w-12 h-12 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-100 mb-2">发布信息</h1>
-            <p className="text-gray-400">分享你的校园动态</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">发布信息</h1>
+            <p className="text-gray-600">分享你的校园动态</p>
           </div>
 
           <div className="flex flex-col gap-6">
             {/* 标题输入 */}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="input-title" className="text-gray-300 font-medium">标题</Label>
+              <Label htmlFor="input-title" className="text-gray-700 font-medium">标题</Label>
               <Input 
                 id="input-title" 
                 placeholder="请输入标题（1-100 字符）" 
                 type="text"
-                className="bg-gray-800/50 border-gray-700 text-gray-100 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
+                className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
                 value={publish?.title || ''}
                 onChange={ChangeTitle}
               />
-              {!titlePass && <ErrorMessage className="text-red-400">标题长度为 1-100 字符</ErrorMessage>}
+              {!titlePass && <ErrorMessage className="text-red-500">标题长度为 1-100 字符</ErrorMessage>}
             </div>
 
             {/* 内容输入 */}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="input-content" className="text-gray-300 font-medium">内容</Label>
+              <Label htmlFor="input-content" className="text-gray-700 font-medium">内容</Label>
               <TextArea
                 id="input-content" 
                 placeholder="分享你的想法..." 
-                className="bg-gray-800/50 border-gray-700 text-gray-100 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 min-h-[200px]"
+                className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200 min-h-[200px]"
                 value={publish?.content || ''}
                 onChange={ChangeContent}
               />
-              {!contentPass && <ErrorMessage className="text-red-400">内容长度为 1-5000 字符</ErrorMessage>}
+              {!contentPass && <ErrorMessage className="text-red-500">内容长度为 1-5000 字符</ErrorMessage>}
             </div>
 
             {/* 可见范围选择 */}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="select-visibility" className="text-gray-300 font-medium">可见范围</Label>
+              <Label htmlFor="select-visibility" className="text-gray-700 font-medium">可见范围</Label>
               <Select 
-                className="w-full bg-gray-800/50 border-gray-700 text-gray-100" 
+                className="w-full bg-white/60 border-gray-300 text-gray-800" 
                 placeholder="请选择可见范围" 
                 selectionMode="single"
                 selectedKeys={publish.visibility ? [publish.visibility] : []}
@@ -272,7 +272,7 @@ export function Publish() {
 
             {/* 图片上传 */}
             <div className="flex flex-col gap-2">
-              <Label className="text-gray-300 font-medium">图片上传</Label>
+              <Label className="text-gray-700 font-medium">图片上传</Label>
               
               {/* 隐藏的文件输入 */}
               <input
@@ -289,7 +289,7 @@ export function Publish() {
                 <Button
                   fullWidth
                   variant="bordered"
-                  className={`border-2 border-dashed border-gray-600 hover:border-purple-500/50 text-gray-400 hover:text-purple-300 py-6 transition-all duration-200 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`border-2 border-dashed border-gray-300 hover:border-sky-500/50 text-gray-500 hover:text-sky-600 py-6 transition-all duration-200 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   onClick={triggerFileInput}
                   isLoading={isUploading}
                   startContent={
@@ -305,7 +305,7 @@ export function Publish() {
                 {previewImages.length > 0 && (
                   <div className="grid grid-cols-3 gap-3">
                     {previewImages.map((img, index) => (
-                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-700">
+                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-300">
                         <img 
                           src={img} 
                           alt={`预览${index + 1}`} 
@@ -330,14 +330,14 @@ export function Publish() {
             {/* 错误提示 */}
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 backdrop-blur-sm">
-                <ErrorMessage className="text-red-400 text-sm">{error}</ErrorMessage>
+                <ErrorMessage className="text-red-600 text-sm">{error}</ErrorMessage>
               </div>
             )}
 
             {/* 成功提示 */}
             {success && (
               <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 backdrop-blur-sm">
-                <p className="text-green-400 text-sm">{success}</p>
+                <p className="text-green-600 text-sm">{success}</p>
               </div>
             )}
 
@@ -346,7 +346,7 @@ export function Publish() {
               <Button
                 fullWidth
                 variant="primary"
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 border-0"
+                className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 border-0"
                 isLoading={isLoading}
                 onClick={submit}
                 startContent={isLoading ? null : (
@@ -362,7 +362,7 @@ export function Publish() {
                 isDisabled
                 fullWidth
                 variant="primary"
-                className="w-full bg-gray-700/50 text-gray-400 font-semibold py-3 px-4 rounded-lg cursor-not-allowed border-0"
+                className="w-full bg-gray-300/50 text-gray-500 font-semibold py-3 px-4 rounded-lg cursor-not-allowed border-0"
               >
                 发布
               </Button>
@@ -372,7 +372,7 @@ export function Publish() {
             <Button
               fullWidth
               variant="light"
-              className="w-full bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 font-semibold py-3 px-4 rounded-lg transition-all duration-200 border border-gray-700"
+              className="w-full bg-white/60 hover:bg-white/80 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-all duration-200 border border-gray-300"
               onClick={() => navigate('/campusList')}
             >
               取消
