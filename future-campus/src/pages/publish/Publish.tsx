@@ -13,8 +13,9 @@ import {
 } from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
 import {getPopularTag, publishArticle} from "../../api/api.tsx";
-import type {PopularTag} from "../../api/Response.tsx";
+import type {ArticlePublishResponse, PopularTag} from "../../api/Response.tsx";
 import type {Key} from "@heroui/react";
+
 export interface PublishProps {
   title: string;
   content: string;
@@ -43,7 +44,7 @@ export function Publish() {
     content: '',
     visibility: 'all',
     imageUrls: [],
-    tags: PopularTag[]
+    tags: []
   });
   
   const [titlePass, setTitlePass] = useState<boolean>(true);
@@ -173,15 +174,15 @@ export function Publish() {
   function addTag(e?: React.KeyboardEvent<HTMLInputElement>) {
     if (e && e.key !== 'Enter') return;
     
-    const tag = tagInput.trim();
+    const tagName = tagInput.trim();
     
     // 验证标签
-    if (!tag) return;
-    if (tag.length > 20) {
+    if (!tagName) return;
+    if (tagName.length > 20) {
       setError('标签长度不能超过 20 个字符');
       return;
     }
-    if (publish.tags.includes(tag)) {
+    if (publish.tags.some(tag => tag.tagName === tagName)) {
       setError('标签已存在');
       return;
     }
@@ -190,8 +191,15 @@ export function Publish() {
       return;
     }
 
+    // 创建新标签对象（自定义标签没有 id 和 hot）
+    const newTag: PopularTag = {
+      tagName: tagName,
+      id: Date.now(), // 使用时间戳作为临时 ID
+      hot: 0
+    };
+
     // 添加标签
-    setPublish({...publish, tags: [...publish.tags, tag]});
+    setPublish({...publish, tags: [...publish.tags, newTag]});
     setTagInput('');
     setError('');
   }
@@ -203,9 +211,9 @@ export function Publish() {
     setPublish({...publish, tags: newTags});
     
     // 如果删除的标签在热门标签中，同步更新热门标签的选中状态
-    const isPopularTag = popularTags.some(tag => tag.tagName === removedTag);
+    const isPopularTag = popularTags.some(tag => tag.id === removedTag.id);
     if (isPopularTag) {
-      const newSelectedTags = new Set(Array.from(selectedTags).filter(key => key !== removedTag));
+      const newSelectedTags = new Set(Array.from(selectedTags).filter(key => key !== removedTag.tagName));
       setSelectedTags(newSelectedTags);
     }
   }
@@ -214,20 +222,20 @@ export function Publish() {
   function handleTagSelectionChange(keys: Iterable<Key>) {
     setSelectedTags(keys);
     
-    // 将选中的热门标签添加到文章标签中
+    // 将选中的热门标签转换为 PopularTag 对象数组
     const selectedKeysArray = Array.from(keys);
-    const selectedTagNames = selectedKeysArray.map(key => {
+    const selectedTagObjects = selectedKeysArray.map(key => {
       const tag = popularTags.find(t => t.tagName === key);
-      return tag ? tag.tagName : String(key);
-    });
+      return tag;
+    }).filter((tag): tag is PopularTag => tag !== undefined);
     
     // 限制最多10个标签
-    if (selectedTagNames.length <= 10) {
-      setPublish({...publish, tags: selectedTagNames});
+    if (selectedTagObjects.length <= 10) {
+      setPublish({...publish, tags: selectedTagObjects});
     } else {
       setError('最多只能添加 10 个标签');
       // 保持之前的选择
-      setSelectedTags(new Set(publish.tags));
+      setSelectedTags(new Set(publish.tags.map(tag => tag.tagName)));
     }
   }
 
@@ -248,20 +256,26 @@ export function Publish() {
     setSuccess('');
 
     try {
-      // TODO: 调用发布接口
+      // 调用发布接口
       console.log('发布信息:', publish);
       
-      // 模拟发布
-      const publishArticleResponse =   await publishArticle({
+      const publishArticleResponse: ArticlePublishResponse = await publishArticle({
         ...publish,
-        tags: Array.from(selectedTags),
+        tags: publish.tags.map(tag => ({
+          id: tag.id,
+          tagName: tag.tagName
+        })),
         imageUrls: publish.imageUrls.map(url => ({url}))
-      })
-      
-      setSuccess('发布成功！即将跳转到列表页...');
+      });
 
-      navigate('/campusList');
+      if (publishArticleResponse.code === 200){
+        setSuccess('发布成功！即将跳转到列表页...');
 
+        navigate('/campusList');
+      }else {
+        console.error('发布错误:', publishArticleResponse.message);
+        setError(publishArticleResponse.message);
+      }
     } catch (err) {
       console.error('发布错误:', err);
       const errorMessage = err instanceof Error ? err.message : '发布失败，请稍后重试';
@@ -384,10 +398,10 @@ export function Publish() {
                   <div className="flex flex-wrap gap-2">
                     {publish.tags.map((tag, index) => (
                       <div 
-                        key={index}
+                        key={tag.id || index}
                         className="inline-flex items-center gap-1 px-3 py-1 bg-sky-500/20 text-sky-700 rounded-full text-sm border border-sky-500/30 hover:bg-sky-500/30 transition-colors duration-200"
                       >
-                        <span>#{tag}</span>
+                        <span>#{tag.tagName}</span>
                         <button
                           type="button"
                           onClick={() => removeTag(index)}

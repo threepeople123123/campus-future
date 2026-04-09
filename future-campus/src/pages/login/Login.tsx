@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {Button, Input, Label, ErrorMessage} from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
 import {getRSAKeyApi, loginApi} from "../../api/api.tsx";
-import type {LoginResponse, RSAKeyResponse} from "../../api/Response.tsx";
+import type {LoginRes, LoginResponse, RSAKeyResponse} from "../../api/Response.tsx";
 import JSEncrypt from 'jsencrypt';
 
 
@@ -96,7 +96,7 @@ export function Login() {
       console.log(encryptedPassword)
 
       // 发送登录请求到后端 API（使用加密后的密码）
-      const loginResponse: LoginResponse = await loginApi({
+      const loginResponse:LoginRes = await loginApi({
         ...login,
         password: encryptedPassword
       });
@@ -105,6 +105,9 @@ export function Login() {
 
       // 存储 token（如果后端返回了 token）
       if (loginResponse.code === 200) {
+        localStorage.setItem('token', loginResponse.data);
+        // 往cookie中塞入值
+        document.cookie = `token=${loginResponse.data}; path=/;`;
         // 跳转到仪表盘页面
         navigate('/campusList');
       } else {

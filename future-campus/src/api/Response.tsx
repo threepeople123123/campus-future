@@ -106,3 +106,11 @@ export interface PopularTag extends CommonResponse {
     tagName:string;
     hot:number;
 }
+
+export interface LoginRes extends CommonResponse{
+    data:string;
+}
+
+export interface ArticlePublishResponse extends CommonResponse{
+    data:string;
+}

@@ -7,8 +7,9 @@ import type {
   SchoolListResponse,
   ArticleRequest,
   RegisterRequest,
-  ResetPasswordRequest, PopularTag
+  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse
 } from "./Response.tsx";
+import type {PublishProps} from "../pages/publish/Publish.tsx";
 
 
 export interface CommonResponse {
@@ -21,7 +22,7 @@ export interface CommonResponse {
 /**
  * 用户登录
  */
-export async function loginApi(loginData: LoginProps): Promise<LoginResponse> {
+export async function loginApi(loginData: LoginProps): Promise<LoginRes> {
   return await api.post('/login/login', loginData);
 }
 
@@ -89,7 +90,7 @@ export async function getPopularTag():Promise<PopularTag[]>{
   return await api.get('/tag/getPopularTag');
 }
 
-export async function publishArticle():Promise<PopularTag[]>{
-  return await api.get('/article/publishArticle');
+export async function publishArticle(publishProps :PublishProps):Promise<ArticlePublishResponse>{
+  return await api.post('/article/publishArticle',publishProps);
 }
 
