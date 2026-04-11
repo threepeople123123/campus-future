@@ -1,4 +1,8 @@
-import type {CommonResponse} from "./api.tsx";
+// 通用响应接口
+export interface CommonResponse {
+    code: number;
+    message: string;
+}
 
 export interface LoginResponse extends CommonResponse {
     data : {

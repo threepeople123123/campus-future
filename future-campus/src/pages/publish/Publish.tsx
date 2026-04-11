@@ -12,9 +12,10 @@ import {
   Description
 } from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
-import {getPopularTag, publishArticle} from "../../api/api.tsx";
-import type {ArticlePublishResponse, PopularTag} from "../../api/Response.tsx";
+import { getPopularTag, ObjectUpload, publishArticle} from "../../api/api.tsx";
+import type {ArticlePublishResponse, PopularTag,CommonResponse} from "../../api/Response.tsx";
 import type {Key} from "@heroui/react";
+import { generateSnowflakeId } from '../../utils/snowflake';
 
 export interface PublishProps {
   title: string;
@@ -96,6 +97,7 @@ export function Publish() {
 
   // 处理图片选择
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    console.log('图片选择:', e.target.files)
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -127,6 +129,9 @@ export function Publish() {
 
       // TODO: 调用图片上传接口
       console.log('上传图片:', file.name);
+
+      const response: CommonResponse = await ObjectUpload(formData)
+
       
       // 模拟上传成功，实际应该调用 API
       // const response = await uploadImageApi(formData);
@@ -167,7 +172,7 @@ export function Publish() {
 
   // 处理标签输入
   function handleTagInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setTagInput(e.target.value);
+    setTagInput(e.target.value)
   }
 
   // 添加标签
@@ -194,7 +199,7 @@ export function Publish() {
     // 创建新标签对象（自定义标签没有 id 和 hot）
     const newTag: PopularTag = {
       tagName: tagName,
-      id: Date.now(), // 使用时间戳作为临时 ID
+      id: generateSnowflakeId(), // 使用雪花算法生成唯一 ID
       hot: 0
     };
 
@@ -221,21 +226,31 @@ export function Publish() {
   // 处理热门标签选择变化
   function handleTagSelectionChange(keys: Iterable<Key>) {
     setSelectedTags(keys);
-    
+      
     // 将选中的热门标签转换为 PopularTag 对象数组
     const selectedKeysArray = Array.from(keys);
-    const selectedTagObjects = selectedKeysArray.map(key => {
+    const selectedPopularTags = selectedKeysArray.map(key => {
       const tag = popularTags.find(t => t.tagName === key);
       return tag;
     }).filter((tag): tag is PopularTag => tag !== undefined);
-    
+      
+    // 保留手动添加的自定义标签(不在popularTags中的标签)
+    const customTags = publish.tags.filter(tag => 
+      !popularTags.some(popularTag => popularTag.id === tag.id)
+    );
+      
+    // 合并自定义标签和选中的热门标签
+    const allTags = [...customTags, ...selectedPopularTags];
+      
     // 限制最多10个标签
-    if (selectedTagObjects.length <= 10) {
-      setPublish({...publish, tags: selectedTagObjects});
+    if (allTags.length <= 10) {
+      setPublish({...publish, tags: allTags});
     } else {
       setError('最多只能添加 10 个标签');
       // 保持之前的选择
-      setSelectedTags(new Set(publish.tags.map(tag => tag.tagName)));
+      setSelectedTags(new Set(publish.tags.filter(tag => 
+        popularTags.some(popularTag => popularTag.id === tag.id)
+      ).map(tag => tag.tagName)));
     }
   }
 

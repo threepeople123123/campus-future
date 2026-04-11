@@ -7,7 +7,7 @@ import type {
   SchoolListResponse,
   ArticleRequest,
   RegisterRequest,
-  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse
+  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse
 } from "./Response.tsx";
 import type {PublishProps} from "../pages/publish/Publish.tsx";
 
@@ -92,5 +92,9 @@ export async function getPopularTag():Promise<PopularTag[]>{
 
 export async function publishArticle(publishProps :PublishProps):Promise<ArticlePublishResponse>{
   return await api.post('/article/publishArticle',publishProps);
+}
+
+export async function ObjectUpload(formData:FormData):Promise<CommonResponse>{
+  return await api.put('/object/upload',formData);
 }
 
