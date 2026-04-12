@@ -5,6 +5,7 @@ import {Register} from "./pages/login/Register.tsx";
 import {ForgotPassword} from "./pages/login/ForgotPassword.tsx";
 import PageIndex from "./pages/pageList/PageIndex.tsx"
 import {Publish} from "./pages/publish/Publish.tsx"
+import {AIChat} from "./pages/aiChat/AIChat.tsx"
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<Login /> as ReactNode} />
         <Route path="/campusList" element={<PageIndex /> as ReactNode} />
         <Route path="/publish" element={<Publish /> as ReactNode} />
+        <Route path="/ai-chat" element={<AIChat /> as ReactNode} />
       </Routes>
     </BrowserRouter>
   );
