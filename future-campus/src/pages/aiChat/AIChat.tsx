@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, TextArea } from '@heroui/react';
+import {aiChatStream} from "../../api/api.tsx";
+import type {AiChatRequest} from "../../api/Response.tsx";
 
 export interface Message {
   id: string;
@@ -19,8 +21,10 @@ export function AIChat() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // 自动滚动到底部
   const scrollToBottom = () => {
@@ -31,21 +35,17 @@ export function AIChat() {
     scrollToBottom();
   }, [messages]);
 
-  // 模拟AI回复
-  const simulateAIResponse = async (userMessage: string): Promise<string> => {
-    // 这里应该调用真实的AI API
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+  // 初始化 conversationId
+  useEffect(() => {
+    const newConversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setConversationId(newConversationId);
     
-    const responses = [
-      '我理解你的问题。根据我的分析，这是一个很好的观点。',
-      '感谢你的提问！让我为你详细解答...',
-      '这是一个有趣的话题。从多个角度来看，我们可以这样理解...',
-      '根据你的描述，我建议你可以尝试以下方法...',
-      '好的，我已经理解了你的需求。让我为你提供相关信息...'
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // 发送消息
   const handleSendMessage = async () => {
@@ -59,30 +59,62 @@ export function AIChat() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue.trim();
     setInputValue('');
     setIsLoading(true);
 
+    let aiMessageContent = '';
+    const aiMessageId = (Date.now() + 1).toString();
+    
+    // 先创建一个空的 AI 消息
+    setMessages(prev => [...prev, {
+      id: aiMessageId,
+      content: '',
+      role: 'ai',
+      timestamp: new Date()
+    }]);
+
     try {
-      const aiResponse = await simulateAIResponse(userMessage.content);
-      
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: aiResponse,
-        role: 'ai',
-        timestamp: new Date()
+      const aiChatRequest: AiChatRequest = {
+        msg: currentInput,
+        conversationId: conversationId
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      abortControllerRef.current = await aiChatStream(
+        aiChatRequest,
+        (content) => {
+          // 接收流式数据，逐步更新消息内容
+          aiMessageContent += content;
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, content: aiMessageContent }
+              : msg
+          ));
+        },
+        () => {
+          // 完成回调
+          setIsLoading(false);
+          abortControllerRef.current = null;
+        },
+        (error) => {
+          // 错误回调
+          console.error('AI聊天错误:', error);
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, content: error || '抱歉，我遇到了一些问题，请稍后再试。' }
+              : msg
+          ));
+          setIsLoading(false);
+          abortControllerRef.current = null;
+        }
+      );
     } catch (error) {
       console.error('获取AI回复失败:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '抱歉，我遇到了一些问题，请稍后再试。',
-        role: 'ai',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, content: '抱歉，我遇到了一些问题，请稍后再试。' }
+          : msg
+      ));
       setIsLoading(false);
     }
   };

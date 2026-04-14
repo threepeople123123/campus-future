@@ -118,3 +118,15 @@ export interface LoginRes extends CommonResponse{
 export interface ArticlePublishResponse extends CommonResponse{
     data:string;
 }
+
+export interface AiChatRequest{
+    msg:string;
+    conversationId:string;
+}
+
+export interface AiChatSSEEvent {
+    type: 'message' | 'done' | 'error';
+    content?: string;
+    conversationId?: string;
+    error?: string;
+}

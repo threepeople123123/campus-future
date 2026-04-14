@@ -17,7 +17,7 @@ function App() {
         <Route path="/" element={<Login /> as ReactNode} />
         <Route path="/campusList" element={<PageIndex /> as ReactNode} />
         <Route path="/publish" element={<Publish /> as ReactNode} />
-        <Route path="/ai-chat" element={<AIChat /> as ReactNode} />
+        <Route path="/aiChat" element={<AIChat /> as ReactNode} />
       </Routes>
     </BrowserRouter>
   );
