@@ -3,11 +3,11 @@ import type { LoginProps } from '../pages/login/Login.tsx';
 import type {
   LoginResponse,
   RSAKeyResponse,
-  ArticleResponse,
+  ArticlePageResponse,
   SchoolListResponse,
   ArticleRequest,
   RegisterRequest,
-  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse, AiChatRequest
+  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse, AiChatRequest, Article
 } from "./Response.tsx";
 import type {PublishProps} from "../pages/publish/Publish.tsx";
 
@@ -78,8 +78,8 @@ export async function publish(){
   return await api.post('/logout');
 }
 
-export async function getCampusList(articleRequest:ArticleRequest):Promise<ArticleResponse[]>{
-  return await api.post('/article/pageList',articleRequest);
+export async function getCampusList(articleRequest:ArticleRequest):Promise<ArticlePageResponse[]> {
+  return await api.post('/article/pageList', articleRequest);
 }
 
 export async function sendEmailCode(email:string):Promise<CommonResponse>{

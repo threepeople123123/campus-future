@@ -1,33 +1,7 @@
-import type {SortDescriptor} from "@heroui/react";
-import {cn, ComboBox, Input, Label, ListBox, Pagination, Table} from "@heroui/react";
-import {Icon} from "@iconify/react";
-import {type Key, useEffect, useState} from "react";
+import {useEffect, useState, useRef, useCallback} from "react";
 import {getCampusList} from "../../api/api.tsx";
-import type {ArticleRequest, ArticleResponse} from "../../api/Response.tsx";
+import type {ArticleRequest, Article, ArticlePageResponse} from "../../api/Response.tsx";
 
-
-function SortableColumnHeader({
-                                  children,
-                                  sortDirection,
-                              }: {
-    children: React.ReactNode;
-    sortDirection?: "ascending" | "descending";
-}) {
-    return (
-        <span className="flex items-center justify-between">
-      {children}
-            {!!sortDirection && (
-                <Icon
-                    icon="gravity-ui:chevron-up"
-                    className={cn(
-                        "size-3 transform transition-transform duration-100 ease-out",
-                        sortDirection === "descending" ? "rotate-180" : "",
-                    )}
-                />
-            )}
-    </span>
-    );
-}
 
 interface PageSizeConstant {
     id: string;
@@ -64,74 +38,84 @@ const pageSizeConstont : PageSizeConstant[] = [
 ];
 
 export default function CampusList() {
-    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-        column: "name",
-        direction: "ascending",
-    });
-
-    const [campusList,setCampusList] = useState<ArticleResponse[]>([])
-
+    const [campusList, setCampusList] = useState<Article[]>([])
     const [pageNum, setPageNum] = useState(1);
-    const [pageSize,setPageSize]  = useState(pageSizeConstont[0].value);
-    const totalPages = 1;
+    const [pageSize, setPageSize] = useState(10);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const observerTarget = useRef<HTMLDivElement>(null);
 
+    // 获取数据
+    const fetchCampusList = useCallback(async (page: number, append = false) => {
+        // 1. 防止重复请求
+        if (isLoading) return;
 
-    const [selectedKey, setSelectedKey] = useState<Key | null>("ten");
-    const selectedNum = pageSizeConstont.find((a) => a.id === selectedKey);
+        setIsLoading(true);
+        try {
+            const articleRequest: ArticleRequest = {
+                pageNum: page,
+                pageSize: pageSize
+            };
 
-    function changeOpinion(key){
-        setSelectedKey(key)
-        setPageSize(selectedNum.value)
-    }
+            const response:ArticlePageResponse = await getCampusList(articleRequest);
 
-
-    const getPageNumbers = () => {
-        // 如果总页数为 0 或 1，只返回 [1]
-        if (totalPages <= 1) {
-            return [1];
-        }
-
-        const pages: (number | "ellipsis")[] = [];
-        pages.push(1);
-        if (pageNum > 3) {
-            pages.push("ellipsis");
-        }
-        const start = Math.max(2, pageNum - 1);
-        const end = Math.min(totalPages - 1, pageNum + 1);
-        for (let i = start; i <= end; i++) {
-            pages.push(i);
-        }
-        if (pageNum < totalPages - 2) {
-            pages.push("ellipsis");
-        }
-        pages.push(totalPages);
-        return pages;
-    };
-
-    function previous(){
-        setPageNum(pageNum - 1)
-    }
-
-
-    function next(){
-        setPageNum(pageNum + 1)
-    }
-
-    useEffect(()=>{
-        async function fetchCampusList() {
-            try {
-                const articleRequest : ArticleRequest =  {
-                    pageNum:pageNum,
-                    pageSize:pageSize
-                }
-                const articleList: ArticleResponse[] = await getCampusList(articleRequest);
-                setCampusList(articleList);
-            } catch (error) {
-                console.error('获取列表失败:', error);
+            // 2. 检查业务状态码
+            if (response.code === 500 || !response.data) {
+                console.error('后端业务异常');
+                setHasMore(false); // 既然出错了，通常停止继续加载更多以免死循环
+                return;
             }
+
+            const articleList = response.data.records || []; // 从 data.records 中提取数组
+            const total = response.data.total || 0;
+
+            // 3. 更新列表
+            if (append) {
+                setCampusList(prev => [...prev, ...articleList]);
+            } else {
+                setCampusList(articleList);
+            }
+
+            // 4. 判断是否还有更多数据
+            if (articleList.length < pageSize || total <= pageNum * pageSize) {
+                setHasMore(false);
+            }
+
+        } catch (error) {
+            console.error('网络或系统失败:', error);
+            setHasMore(false);
+        } finally {
+            // 5. 无论成功失败，必须释放锁
+            setIsLoading(false);
         }
-        fetchCampusList();
-    },[pageNum,pageSize])
+    }, [pageSize]); // 注意：依赖项去掉 isLoading，否则 useCallback 会因为 isLoading 变化而频繁重排
+
+    // 初始加载和页码变化时获取数据
+    useEffect(() => {
+        fetchCampusList(pageNum, pageNum > 1);
+    }, [pageNum, fetchCampusList]);
+
+    // Intersection Observer 实现无限滚动
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !isLoading) {
+                    setPageNum(prev => prev + 1);
+                }
+            },
+            { threshold: 0.5 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [hasMore, isLoading]);
 
     return (
 
@@ -144,105 +128,127 @@ export default function CampusList() {
             </div>
 
             {/* 主内容区域 */}
-            <div className="relative z-10 flex flex-col items-center justify-start min-h-screen py-8 px-[10vw]">
-                <div className="w-full max-w-7xl">
-                    <Table className="w-full bg-white/40 backdrop-blur-sm rounded-lg shadow-lg border border-white/30">
-                        <Table.ScrollContainer>
-                            <Table.Content
-                                aria-label="Sortable table"
-                                className="min-w-[600px] text-gray-800"
-                                sortDescriptor={sortDescriptor}
-                                onSortChange={setSortDescriptor}
-                            >
-                                <Table.Header className="bg-sky-500/10">
-                                    <Table.Column allowsSorting isRowHeader id="name">
-                                        {({sortDirection}) => (
-                                            <SortableColumnHeader sortDirection={sortDirection}>
-                                                <span className="text-gray-700 font-medium">标题</span>
-                                            </SortableColumnHeader>
-                                        )}
-                                    </Table.Column>
-                                </Table.Header>
-                                <Table.Body>
-                                    {campusList.length > 0 ? (
-                                        campusList.map((campus) => (
-                                            <Table.Row key={campus.id} id={campus.id} className="bg-white/30 hover:bg-sky-100/50 transition-colors">
-                                                <Table.Cell className="text-center text-gray-700 bg-transparent">{campus.title}</Table.Cell>
-                                            </Table.Row>
-                                        ))
-                                    ) : (
-                                        <Table.Row>
-                                            <Table.Cell className="text-center text-gray-500 py-8">
-                                                暂无数据
-                                            </Table.Cell>
-                                        </Table.Row>
-                                    )}
-                                </Table.Body>
-                            </Table.Content>
-                        </Table.ScrollContainer>
-                    </Table>
+            <div className="relative z-10 flex flex-col items-center min-h-screen py-8 px-[10vw]">
+                {/* 顶部标题 */}
+                <div className="w-full max-w-5xl mb-8">
+                    <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">校园文章列表</h1>
+                    <p className="text-gray-600 text-center">浏览最新的校园动态和文章</p>
                 </div>
 
-                {/* 分页组件 */}
-                <div className="w-full max-w-2xs overflow-x-auto sm:max-w-full backdrop-blur-lg">
-                    <Pagination className="justify-center">
-                        <Pagination.Content>
-                            <Pagination.Item>
-                                <Pagination.Previous isDisabled={pageNum === 1} onPress={() => previous()}>
-                                    <Pagination.PreviousIcon />
-                                    <span>上一页</span>
-                                </Pagination.Previous>
-                            </Pagination.Item>
-                            {getPageNumbers().map((p, i) =>
-                                p === "ellipsis" ? (
-                                    <Pagination.Item key={`ellipsis-${i}`}>
-                                        <Pagination.Ellipsis />
-                                    </Pagination.Item>
-                                ) : (
-                                    <Pagination.Item key={p}>
-                                        <Pagination.Link isActive={p === pageNum} onPress={() => setPageNum(p)}>
-                                            {p}
-                                        </Pagination.Link>
-                                    </Pagination.Item>
-                                ),
-                            )}
-                            <Pagination.Item>
-                                <Pagination.Next isDisabled={pageNum === totalPages} onPress={() => next()}>
-                                    <span>下一页</span>
-                                    <Pagination.NextIcon />
-                                </Pagination.Next>
-                            </Pagination.Item>
-                        </Pagination.Content>
-
-                        <span className="">
-                        <ComboBox
-                            className="w-[256px]"
-                            selectedKey={selectedKey}
-                            onSelectionChange={(key) =>{
-                                changeOpinion(key)
-                            }}
-                        >
-                            <Label></Label>
-                            <ComboBox.InputGroup>
-                                <Input placeholder="Search animals..." />
-                                <ComboBox.Trigger />
-                            </ComboBox.InputGroup>
-                            <ComboBox.Popover>
-                                <ListBox>
-                                    {pageSizeConstont.map((number) => (
-                                        <ListBox.Item key={number.id} id={number.id} textValue={number.name}>
-                                            {number.name}
-                                            <ListBox.ItemIndicator />
-                                        </ListBox.Item>
-                                    ))}
-                                </ListBox>
-                            </ComboBox.Popover>
-                        </ComboBox>
-
-                        </span>
-                    </Pagination>
+                {/* 文章卡片列表 */}
+                <div className="w-full max-w-5xl space-y-4">
+                    {campusList.length > 0 ? (
+                        campusList.map((campus, index) => (
+                            <div
+                                key={campus.id}
+                                className="group backdrop-blur-xl bg-white/40 border border-white/30 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white/60 overflow-hidden"
+                                style={{
+                                    animation: `fade-in-up 0.5s ease-out ${index * 0.05}s both`
+                                }}
+                            >
+                                <div className="p-6">
+                                    {/* 标题区域 */}
+                                    <div className="flex items-start justify-between gap-4 mb-3">
+                                        <h3 className="text-xl font-semibold text-gray-800 group-hover:text-sky-600 transition-colors duration-200 line-clamp-2">
+                                            {campus.title}
+                                        </h3>
+                                        <span className="flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full bg-sky-500/10 text-sky-600 text-xs font-medium">
+                                            文章
+                                        </span>
+                                    </div>
+                                    
+                                    {/* 内容预览 */}
+                                    {campus.content && (
+                                        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                                            {typeof campus.content === 'string' ? campus.content : '点击查看详细内容'}
+                                        </p>
+                                    )}
+                                    
+                                    {/* 底部信息栏 */}
+                                    <div className="flex items-center justify-between pt-4 border-t border-gray-200/50">
+                                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                                            {campus.sendUserName && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <svg className="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    <span>{campus.sendUserName}</span>
+                                                </div>
+                                            )}
+                                            {campus.createTime && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <svg className="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <span>{new Date(campus.createTime).toLocaleDateString('zh-CN')}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-3">
+                                            {campus.likeCount !== undefined && (
+                                                <div className="flex items-center gap-1 text-sm text-gray-500">
+                                                    <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                                    </svg>
+                                                    <span>{campus.likeCount}</span>
+                                                </div>
+                                            )}
+                                            <button className="text-sky-600 hover:text-sky-700 text-sm font-medium transition-colors duration-200">
+                                                查看详情 →
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        !isLoading && (
+                            <div className="text-center py-16 backdrop-blur-xl bg-white/40 border border-white/30 rounded-2xl">
+                                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <p className="text-gray-500 text-lg">暂无文章数据</p>
+                            </div>
+                        )
+                    )}
+                    
+                    {/* 加载更多指示器 */}
+                    {isLoading && (
+                        <div className="flex justify-center items-center py-8">
+                            <div className="flex items-center gap-2 text-gray-600">
+                                <div className="w-2 h-2 bg-sky-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                                <div className="w-2 h-2 bg-sky-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                <div className="w-2 h-2 bg-sky-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* 观察目标元素 */}
+                    <div ref={observerTarget} className="h-10" />
+                    
+                    {/* 没有更多数据提示 */}
+                    {!hasMore && campusList.length > 0 && (
+                        <div className="text-center py-6 text-gray-500 text-sm">
+                            已经到底了 ~
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* CSS 动画 */}
+            <style>{`
+                @keyframes fade-in-up {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `}</style>
         </div>
     );
 }

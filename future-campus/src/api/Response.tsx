@@ -21,7 +21,7 @@ export interface RSAKeyResponse extends CommonResponse {
     data:string;
 }
 
-export interface ArticleResponse extends CommonResponse {
+export interface ArticlePageResponse extends CommonResponse {
     data: {
         records: Article[];
         total: number;
@@ -34,14 +34,14 @@ export interface ArticleResponse extends CommonResponse {
 export interface Article {
     id: string;
     title: string;
-    content: string;
+    content: string | number;
     viewRange: number;
     sendUserName: string;
     sendUserId: number;
     createTime: string;
     photoUrl: string[];
     likeCount: number;
-    heat: number;
+    heat: number | string;
     tag: string[];
 }
 
@@ -64,30 +64,6 @@ export interface ArticleRequest {
     pageSize: number;
 }
 
-
-export interface ArticleResponse {
-    id:string;
-
-    title:string;
-
-    content:number;
-
-    viewRange:number;
-
-    sendUserName:string;
-
-    sendUserId:number;
-
-    createTime:string;
-
-    photoUrl:string[];
-
-    likeCount:number;
-
-    heat:string;
-
-    tag:string[];
-}
 
 
 export interface RegisterRequest {
