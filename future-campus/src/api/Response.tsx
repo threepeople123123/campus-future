@@ -106,3 +106,26 @@ export interface AiChatSSEEvent {
     conversationId?: string;
     error?: string;
 }
+
+export interface ArticleDetailResponse extends CommonResponse {
+    data: ArticleDetail;
+}
+
+export interface ArticleDetail {
+    id: string;
+    title: string;
+    content: string;
+    viewRange: number;
+    sendUserName: string;
+    sendUserId: number;
+    createTime: string;
+    updateTime?: string;
+    photoUrl: string[];
+    likeCount: number;
+    heat: number | string;
+    tag: string[];
+    schoolName?: string;
+    schoolId?: string;
+    isLiked?: boolean;
+    commentCount?: number;
+}

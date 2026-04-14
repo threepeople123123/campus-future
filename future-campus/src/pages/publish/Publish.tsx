@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router-dom';
 import { getPopularTag, ObjectUpload, publishArticle} from "../../api/api.tsx";
 import type {ArticlePublishResponse, PopularTag,CommonResponse} from "../../api/Response.tsx";
 import type {Key} from "@heroui/react";
-import { generateSnowflakeId } from '../../utils/snowflake';
 
 export interface PublishProps {
   title: string;
@@ -55,9 +54,9 @@ export function Publish() {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState<string>('');
   const [popularTags, setPopularTags] = useState<PopularTag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Iterable<Key>>(new Set([]));
+  const [showTagPanel, setShowTagPanel] = useState<boolean>(false);
 
   function ChangeTitle(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
@@ -170,57 +169,35 @@ export function Publish() {
     fileInputRef.current?.click();
   }
 
-  // 处理标签输入
-  function handleTagInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setTagInput(e.target.value)
+  // 处理标签输入框点击
+  function handleTagInputClick() {
+    setShowTagPanel(!showTagPanel);
   }
 
-  // 添加标签
-  function addTag(e?: React.KeyboardEvent<HTMLInputElement>) {
-    if (e && e.key !== 'Enter') return;
-    
-    const tagName = tagInput.trim();
-    
-    // 验证标签
-    if (!tagName) return;
-    if (tagName.length > 20) {
-      setError('标签长度不能超过 20 个字符');
-      return;
-    }
-    if (publish.tags.some(tag => tag.tagName === tagName)) {
-      setError('标签已存在');
-      return;
-    }
-    if (publish.tags.length >= 10) {
-      setError('最多只能添加 10 个标签');
-      return;
+  // 点击外部关闭标签面板
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      if (showTagPanel && !target.closest('#input-tags') && !target.closest('.tag-selection-panel')) {
+        setShowTagPanel(false);
+      }
     }
 
-    // 创建新标签对象（自定义标签没有 id 和 hot）
-    const newTag: PopularTag = {
-      tagName: tagName,
-      id: generateSnowflakeId(), // 使用雪花算法生成唯一 ID
-      hot: 0
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
-
-    // 添加标签
-    setPublish({...publish, tags: [...publish.tags, newTag]});
-    setTagInput('');
-    setError('');
-  }
+  }, [showTagPanel]);
 
   // 删除标签
   function removeTag(index: number) {
     const removedTag = publish.tags[index];
     const newTags = publish.tags.filter((_, i) => i !== index);
     setPublish({...publish, tags: newTags});
-    
-    // 如果删除的标签在热门标签中，同步更新热门标签的选中状态
-    const isPopularTag = popularTags.some(tag => tag.id === removedTag.id);
-    if (isPopularTag) {
-      const newSelectedTags = new Set(Array.from(selectedTags).filter(key => key !== removedTag.tagName));
-      setSelectedTags(newSelectedTags);
-    }
+      
+    // 同步更新热门标签的选中状态
+    const newSelectedTags = new Set(Array.from(selectedTags).filter(key => key !== removedTag.tagName));
+    setSelectedTags(newSelectedTags);
   }
 
   // 处理热门标签选择变化
@@ -234,23 +211,13 @@ export function Publish() {
       return tag;
     }).filter((tag): tag is PopularTag => tag !== undefined);
       
-    // 保留手动添加的自定义标签(不在popularTags中的标签)
-    const customTags = publish.tags.filter(tag => 
-      !popularTags.some(popularTag => popularTag.id === tag.id)
-    );
-      
-    // 合并自定义标签和选中的热门标签
-    const allTags = [...customTags, ...selectedPopularTags];
-      
     // 限制最多10个标签
-    if (allTags.length <= 10) {
-      setPublish({...publish, tags: allTags});
+    if (selectedPopularTags.length <= 10) {
+      setPublish({...publish, tags: selectedPopularTags});
     } else {
       setError('最多只能添加 10 个标签');
       // 保持之前的选择
-      setSelectedTags(new Set(publish.tags.filter(tag => 
-        popularTags.some(popularTag => popularTag.id === tag.id)
-      ).map(tag => tag.tagName)));
+      setSelectedTags(new Set(publish.tags.map(tag => tag.tagName)));
     }
   }
 
@@ -393,22 +360,55 @@ export function Publish() {
               </Select>
             </div>
 
-            {/* 标签输入 */}
+            {/* 标签选择 */}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="input-tags" className="text-gray-700 font-medium">标签</Label>
+              <Label htmlFor="input-tags" className="text-gray-700 font-medium">请选择标签</Label>
               <div className="space-y-3">
-                {/* 标签输入框 */}
-                <Input 
-                  id="input-tags" 
-                  placeholder="输入标签后按回车添加（最多 10 个）" 
-                  type="text"
-                  value={tagInput}
-                  onChange={handleTagInputChange}
-                  onKeyDown={addTag}
-                  className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200"
-                />
+                {/* 标签输入框(只读,点击弹出选择面板) */}
+                <div className="relative">
+                  <Input 
+                    id="input-tags" 
+                    placeholder="点击选择标签（最多 10 个）" 
+                    type="text"
+                    readOnly
+                    value={publish.tags.length > 0 ? publish.tags.map(tag => tag.tagName).join(', ') : ''}
+                    onClick={handleTagInputClick}
+                    className="bg-white/60 border-gray-300 text-gray-800 placeholder-gray-500 px-4 py-3 rounded-lg focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all duration-200 cursor-pointer"
+                    endContent={
+                      <svg className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showTagPanel ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    }
+                  />
+                  
+                  {/* 标签选择面板 */}
+                  {showTagPanel && popularTags.length > 0 && (
+                    <div className="tag-selection-panel absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl rounded-lg shadow-xl border border-gray-200 p-4 z-50 max-h-60 overflow-y-auto">
+                      <TagGroup
+                        selectedKeys={selectedTags}
+                        selectionMode="multiple"
+                        onSelectionChange={handleTagSelectionChange}
+                      >
+                        <TagGroup.List className="flex flex-wrap gap-2">
+                          {popularTags.map((tag) => (
+                            <Tag 
+                              key={tag.tagName} 
+                              id={tag.tagName}
+                              className="cursor-pointer hover:bg-sky-500/20 transition-colors duration-200"
+                            >
+                              {tag.tagName}
+                            </Tag>
+                          ))}
+                        </TagGroup.List>
+                      </TagGroup>
+                      <p className="text-xs text-gray-500 mt-3 pt-2 border-t border-gray-200">
+                        已选择 {Array.from(selectedTags).length} 个标签
+                      </p>
+                    </div>
+                  )}
+                </div>
                 
-                {/* 标签列表 */}
+                {/* 已选标签列表 */}
                 {publish.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {publish.tags.map((tag, index) => (
@@ -430,7 +430,7 @@ export function Publish() {
                     ))}
                   </div>
                 )}
-                
+                            
                 {/* 标签数量提示 */}
                 <p className="text-xs text-gray-500">
                   已添加 {publish.tags.length}/10 个标签
@@ -438,32 +438,6 @@ export function Publish() {
               </div>
             </div>
 
-            {/* 热门标签 */}
-            {popularTags.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <TagGroup
-                  selectedKeys={selectedTags}
-                  selectionMode="multiple"
-                  onSelectionChange={handleTagSelectionChange}
-                >
-                  <Label className="text-gray-700 font-medium">热门标签</Label>
-                  <TagGroup.List className="flex flex-wrap gap-2">
-                    {popularTags.map((tag) => (
-                      <Tag 
-                        key={tag.tagName} 
-                        id={tag.tagName}
-                        className="cursor-pointer"
-                      >
-                        {tag.tagName}
-                      </Tag>
-                    ))}
-                  </TagGroup.List>
-                  <Description className="text-xs text-gray-500 mt-1">
-                    已选择: {Array.from(selectedTags).length > 0 ? Array.from(selectedTags).join(", ") : "无"}
-                  </Description>
-                </TagGroup>
-              </div>
-            )}
 
 
             {/* 图片上传 */}

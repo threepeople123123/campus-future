@@ -7,7 +7,8 @@ import type {
   SchoolListResponse,
   ArticleRequest,
   RegisterRequest,
-  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse, AiChatRequest, Article
+  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse, AiChatRequest, Article,
+  ArticleDetailResponse
 } from "./Response.tsx";
 import type {PublishProps} from "../pages/publish/Publish.tsx";
 
@@ -82,6 +83,13 @@ export async function getCampusList(articleRequest:ArticleRequest):Promise<Artic
   return await api.post('/article/pageList', articleRequest);
 }
 
+/**
+ * 获取文章详情
+ */
+export async function getArticleDetailApi(articleId: string): Promise<ArticleDetailResponse> {
+  return await api.get(`/article/getById/${articleId}`);
+}
+
 export async function sendEmailCode(email:string):Promise<CommonResponse>{
   return await api.get('/login/sendCode', { params: { email } });
 }
@@ -98,6 +106,101 @@ export async function ObjectUpload(formData:FormData):Promise<CommonResponse>{
   return await api.put('/object/upload',formData);
 }
 
+
+/**
+ * SSE 流式聊天
+ * @param msg 用户消息
+ * @param conversationId 会话ID
+ * @param onMessage 接收到消息片段的回调
+ * @param onComplete 完成回调
+ * @param onError 错误回调
+ */
+export function AiChatSSE(
+  msg: string,
+  conversationId: string,
+  onMessage: (chunk: string) => void,
+  onComplete?: () => void,
+  onError?: (error: Error) => void
+): AbortController {
+  const controller = new AbortController();
+  
+  // 构建请求URL和参数
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+  const url = `${baseUrl}/ai/chat`;
+  
+  // 使用 fetch API 进行 SSE 请求
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // 如果需要认证,添加 token
+      // 'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ msg, conversationId }),
+    signal: controller.signal
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      if (!reader) {
+        throw new Error('Response body is null');
+      }
+      
+      // 读取流数据
+      function readStream(): Promise<void> {
+        return reader.read().then(({ done, value }) => {
+          if (done) {
+            onComplete?.();
+            return;
+          }
+          
+          // 解码数据块
+          const chunk = decoder.decode(value, { stream: true });
+          
+          // 处理 SSE 格式数据 (data: xxx\n\n)
+          const lines = chunk.split('\n');
+          lines.forEach(line => {
+            if (line.startsWith('data:')) {
+              const data = line.substring(5).trim();
+              if (data) {
+                onMessage(data);
+              }
+            } else if (line.trim()) {
+              // 如果不是 SSE 格式,直接返回原始数据
+              onMessage(line);
+            }
+          });
+          
+          // 继续读取
+          return readStream();
+        });
+      }
+      
+      return readStream();
+    })
+    .catch(error => {
+      if (error.name === 'AbortError') {
+        console.log('SSE 请求已中止');
+        return;
+      }
+      console.error('SSE 请求错误:', error);
+      onError?.(error);
+    });
+  
+  return controller;
+}
+
+/**
+ * 普通聊天接口(非流式)
+ */
+export async function AiChat(msg: string, conversationId: string) {
+  return await api.post('/ai/chat', { msg, conversationId });
+}
 /**
  * AI聊天 - SSE流式响应 (POST方式)
  */

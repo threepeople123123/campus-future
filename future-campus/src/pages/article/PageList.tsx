@@ -1,4 +1,5 @@
 import {useEffect, useState, useRef, useCallback} from "react";
+import {useNavigate} from "react-router-dom";
 import {getCampusList} from "../../api/api.tsx";
 import type {ArticleRequest, Article, ArticlePageResponse} from "../../api/Response.tsx";
 
@@ -38,12 +39,17 @@ const pageSizeConstont : PageSizeConstant[] = [
 ];
 
 export default function CampusList() {
+    const navigate = useNavigate();
     const [campusList, setCampusList] = useState<Article[]>([])
     const [pageNum, setPageNum] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null);
+
+    function viewArticle(id:number){
+        navigate("/articleDetail", { state: { id: id } })
+    }
 
     // 获取数据
     const fetchCampusList = useCallback(async (page: number, append = false) => {
@@ -144,6 +150,9 @@ export default function CampusList() {
                                 className="group backdrop-blur-xl bg-white/40 border border-white/30 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-white/60 overflow-hidden"
                                 style={{
                                     animation: `fade-in-up 0.5s ease-out ${index * 0.05}s both`
+                                }}
+                                onClick={() =>{
+                                    viewArticle(campus.id)
                                 }}
                             >
                                 <div className="p-6">
