@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {Button, Input, Label, ErrorMessage} from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
 import {getRSAKeyApi, loginApi} from "../../api/api.tsx";
-import type {LoginRes, LoginResponse, RSAKeyResponse} from "../../api/Response.tsx";
+import type {LoginRes, RSAKeyResponse} from "../../api/Response.tsx";
 import JSEncrypt from 'jsencrypt';
 
 

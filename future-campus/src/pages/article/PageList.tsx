@@ -2,52 +2,20 @@ import {useEffect, useState, useRef, useCallback} from "react";
 import {useNavigate} from "react-router-dom";
 import {getCampusList} from "../../api/api.tsx";
 import type {ArticleRequest, Article, ArticlePageResponse} from "../../api/Response.tsx";
+import {Button} from "@heroui/react";
 
-
-interface PageSizeConstant {
-    id: string;
-    name: string;
-    value: number;
-}
-
-const pageSizeConstont : PageSizeConstant[] = [
-    {
-        id: "ten",
-        name: "10页条",
-        value : 10
-    },
-    {
-        id: "twenty",
-        name: "20页条",
-        value :20
-    },
-    {
-        id: "thirty",
-        name: "30页条",
-        value : 30
-    },
-    {
-        id: "forty",
-        name: "40页条",
-        value : 40
-    },
-    {
-        id: "fifty",
-        name: "50页条",
-        value : 50
-    },
-];
 
 export default function CampusList() {
     const navigate = useNavigate();
     const [campusList, setCampusList] = useState<Article[]>([])
     const [pageNum, setPageNum] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
     const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null);
 
-    function viewArticle(id:number){
+    const pageSize = 10
+
+    function viewArticle(id: number){
         navigate("/articleDetail", { state: { id: id } })
     }
 
@@ -137,8 +105,21 @@ export default function CampusList() {
             <div className="relative z-10 flex flex-col items-center min-h-screen py-8 px-[10vw]">
                 {/* 顶部标题 */}
                 <div className="w-full max-w-5xl mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">校园文章列表</h1>
-                    <p className="text-gray-600 text-center">浏览最新的校园动态和文章</p>
+                    <div className="flex items-center justify-between">
+                        <div className="text-center flex-1">
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2">校园文章列表</h1>
+                            <p className="text-gray-600">浏览最新的校园动态和文章</p>
+                        </div>
+                        <Button className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+                        onClick={() => {navigate("/publish")}}>
+                            发布文章
+                        </Button>
+
+                        <Button className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+                                onClick={() => {navigate("/aiChat")}}>
+                            ai助手
+                        </Button>
+                    </div>
                 </div>
 
                 {/* 文章卡片列表 */}

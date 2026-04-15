@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import {  TextArea } from '@heroui/react';
+import {Button, TextArea} from '@heroui/react';
 import {aiChatStream} from "../../api/api.tsx";
 import type {AiChatRequest} from "../../api/Response.tsx";
+import {useNavigate} from "react-router-dom";
 
 export interface Message {
   id: string;
@@ -19,6 +20,7 @@ export function AIChat() {
       timestamp: new Date()
     }
   ]);
+  const navigate = useNavigate();
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string>('');
@@ -153,6 +155,10 @@ export function AIChat() {
             </svg>
           </button>
         </div>
+        <Button className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+                onClick={() => {navigate("/campusList")}}>
+          返回列表
+        </Button>
       </header>
 
       {/* 消息列表区域 */}

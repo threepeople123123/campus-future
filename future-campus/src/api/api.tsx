@@ -79,7 +79,7 @@ export async function publish(){
   return await api.post('/logout');
 }
 
-export async function getCampusList(articleRequest:ArticleRequest):Promise<ArticlePageResponse[]> {
+export async function getCampusList(articleRequest:ArticleRequest):Promise<ArticlePageResponse> {
   return await api.post('/article/pageList', articleRequest);
 }
 

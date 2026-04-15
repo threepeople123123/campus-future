@@ -32,7 +32,7 @@ export interface ArticlePageResponse extends CommonResponse {
 }
 
 export interface Article {
-    id: string;
+    id: number;
     title: string;
     content: string | number;
     viewRange: number;
@@ -55,11 +55,11 @@ export interface SchoolListResponse extends CommonResponse {
 }
 
 export interface ArticleRequest {
-    viewRange: number;
-    tag: string[];
-    query: string;
-    schoolName: string;
-    schoolId: string;
+    viewRange?: number;
+    tag?: string[];
+    query?: string;
+    schoolName?: string;
+    schoolId?: string;
     pageNum: number;
     pageSize: number;
 }
