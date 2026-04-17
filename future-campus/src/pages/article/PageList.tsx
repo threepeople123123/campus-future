@@ -51,7 +51,7 @@ export default function CampusList() {
             }
 
             // 4. 判断是否还有更多数据
-            if (articleList.length < pageSize || total <= pageNum * pageSize) {
+            if (articleList.length < pageSize || total <= page * pageSize) {
                 setHasMore(false);
             }
 
@@ -62,12 +62,12 @@ export default function CampusList() {
             // 5. 无论成功失败，必须释放锁
             setIsLoading(false);
         }
-    }, [pageSize]); // 注意：依赖项去掉 isLoading，否则 useCallback 会因为 isLoading 变化而频繁重排
+    }, []); // 移除所有依赖，因为我们在函数内部使用参数
 
     // 初始加载和页码变化时获取数据
     useEffect(() => {
         fetchCampusList(pageNum, pageNum > 1);
-    }, [pageNum, fetchCampusList]);
+    }, [pageNum]); // 只依赖 pageNum
 
     // Intersection Observer 实现无限滚动
     useEffect(() => {

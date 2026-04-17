@@ -8,13 +8,13 @@ import {
   Select,
   ListBox,
   TagGroup,
-  Tag,
-  Description
+  Tag
 } from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
 import { getPopularTag, ObjectUpload, publishArticle} from "../../api/api.tsx";
 import type {ArticlePublishResponse, PopularTag,CommonResponse} from "../../api/Response.tsx";
 import type {Key} from "@heroui/react";
+import Checklogin from "../login/Checklogin.tsx";
 
 export interface PublishProps {
   title: string;
@@ -131,21 +131,28 @@ export function Publish() {
 
       const response: CommonResponse = await ObjectUpload(formData)
 
+      if (response.code == 200){
+        // 模拟返回 URL
+        const mockImageUrl = `https://example.com/uploads/${Date.now()}_${file.name}`;
+
+        // 更新状态
+        const newImageUrls = [...publish.imageUrls, mockImageUrl];
+        setPublish({...publish, imageUrls: newImageUrls});
+        setPreviewImages([...previewImages, URL.createObjectURL(file)]);
+
+        setSuccess('图片上传成功');
+        setTimeout(() => setSuccess(''), 2000);
+      }else{
+        console.error('上传错误:', response.message);
+        setError(response.message);
+      }
+
       
       // 模拟上传成功，实际应该调用 API
       // const response = await uploadImageApi(formData);
       // const imageUrl = response.data.url;
       
-      // 模拟返回 URL
-      const mockImageUrl = `https://example.com/uploads/${Date.now()}_${file.name}`;
-      
-      // 更新状态
-      const newImageUrls = [...publish.imageUrls, mockImageUrl];
-      setPublish({...publish, imageUrls: newImageUrls});
-      setPreviewImages([...previewImages, URL.createObjectURL(file)]);
-      
-      setSuccess('图片上传成功');
-      setTimeout(() => setSuccess(''), 2000);
+
 
     } catch (err) {
       console.error('上传错误:', err);
@@ -293,7 +300,12 @@ export function Publish() {
       <div className="relative z-10 w-full max-w-3xl mx-4 my-8">
         <div className="backdrop-blur-xl bg-white/40 rounded-3xl shadow-2xl p-8 border border-white/30">
           {/* Logo 和标题 */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 relative">
+            {/* 右上角登录按钮 */}
+            <div className="absolute top-0 right-0">
+              <Checklogin>还未登录，发布前先登录</Checklogin>
+            </div>
+            
             <div className="inline-flex items-center justify-center w-20 h-20 bg-sky-500/20 rounded-full mb-4 backdrop-blur-sm">
               <svg className="w-12 h-12 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

@@ -3,6 +3,7 @@ import {Button, TextArea} from '@heroui/react';
 import {aiChatStream} from "../../api/api.tsx";
 import type {AiChatRequest} from "../../api/Response.tsx";
 import {useNavigate} from "react-router-dom";
+import ReactMarkdown from 'react-markdown';
 
 export interface Message {
   id: string;
@@ -41,7 +42,7 @@ export function AIChat() {
   useEffect(() => {
     const newConversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     setConversationId(newConversationId);
-    
+
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -67,7 +68,7 @@ export function AIChat() {
 
     let aiMessageContent = '';
     const aiMessageId = (Date.now() + 1).toString();
-    
+
     // 先创建一个空的 AI 消息
     setMessages(prev => [...prev, {
       id: aiMessageId,
@@ -87,8 +88,8 @@ export function AIChat() {
         (content) => {
           // 接收流式数据，逐步更新消息内容
           aiMessageContent += content;
-          setMessages(prev => prev.map(msg => 
-            msg.id === aiMessageId 
+          setMessages(prev => prev.map(msg =>
+            msg.id === aiMessageId
               ? { ...msg, content: aiMessageContent }
               : msg
           ));
@@ -101,8 +102,8 @@ export function AIChat() {
         (error) => {
           // 错误回调
           console.error('AI聊天错误:', error);
-          setMessages(prev => prev.map(msg => 
-            msg.id === aiMessageId 
+          setMessages(prev => prev.map(msg =>
+            msg.id === aiMessageId
               ? { ...msg, content: error || '抱歉，我遇到了一些问题，请稍后再试。' }
               : msg
           ));
@@ -112,8 +113,8 @@ export function AIChat() {
       );
     } catch (error) {
       console.error('获取AI回复失败:', error);
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
+      setMessages(prev => prev.map(msg =>
+        msg.id === aiMessageId
           ? { ...msg, content: '抱歉，我遇到了一些问题，请稍后再试。' }
           : msg
       ));
@@ -176,7 +177,7 @@ export function AIChat() {
                 <h2 className="text-3xl font-bold text-gray-800">有什么可以帮您的?</h2>
                 <p className="text-gray-600">我是智慧校园AI助手,随时为您解答问题</p>
               </div>
-              
+
               {/* 快捷提问卡片 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
                 {[
@@ -212,7 +213,7 @@ export function AIChat() {
                       </svg>
                     </div>
                   )}
-                  
+
                   {/* 用户头像 */}
                   {message.role === 'user' && (
                     <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-r from-sky-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
@@ -221,7 +222,7 @@ export function AIChat() {
                       </svg>
                     </div>
                   )}
-                  
+
                   {/* 消息内容 */}
                   <div className={`flex-1 max-w-[85%] ${message.role === 'user' ? 'text-right' : ''}`}>
                     <div
@@ -231,8 +232,21 @@ export function AIChat() {
                           : 'bg-white/60 text-gray-800 border border-white/30'
                       }`}
                     >
-                      <div className="text-sm leading-relaxed whitespace-pre-wrap text-left">
-                        {message.content}
+                      <div className="text-sm leading-relaxed text-left prose prose-sm max-w-none">
+                        {message.role === 'user' ? (
+                          message.content
+                        ) : (
+                          <ReactMarkdown
+                            components={{
+                              a: ({node, ...props}) => (
+                                <a {...props} className="text-sky-600 hover:underline" target="_blank" rel="noopener noreferrer" />
+                              ),
+                              p: ({node, ...props}) => <p {...props} className="my-1" />,
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        )}
                       </div>
                     </div>
                     
