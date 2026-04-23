@@ -129,3 +129,10 @@ export interface ArticleDetail {
     isLiked?: boolean;
     commentCount?: number;
 }
+
+export interface UploadImage extends  CommonResponse{
+    data:{
+        downloadUrl:string;
+        id:string;
+    }
+}

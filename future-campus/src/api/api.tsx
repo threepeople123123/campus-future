@@ -8,7 +8,7 @@ import type {
   ArticleRequest,
   RegisterRequest,
   ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse, AiChatRequest, Article,
-  ArticleDetailResponse
+  ArticleDetailResponse, UploadImage
 } from "./Response.tsx";
 import type {PublishProps} from "../pages/publish/Publish.tsx";
 
@@ -102,7 +102,7 @@ export async function publishArticle(publishProps :PublishProps):Promise<Article
   return await api.post('/article/publishArticle',publishProps);
 }
 
-export async function ObjectUpload(formData:FormData):Promise<CommonResponse>{
+export async function ObjectUpload(formData:FormData):Promise<UploadImage>{
   return await api.put('/object/upload',formData);
 }
 

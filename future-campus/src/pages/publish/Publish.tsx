@@ -12,7 +12,7 @@ import {
 } from "@heroui/react";
 import { useNavigate } from 'react-router-dom';
 import { getPopularTag, ObjectUpload, publishArticle} from "../../api/api.tsx";
-import type {ArticlePublishResponse, PopularTag,CommonResponse} from "../../api/Response.tsx";
+import type {ArticlePublishResponse, PopularTag, UploadImage} from "../../api/Response.tsx";
 import type {Key} from "@heroui/react";
 import Checklogin from "../login/Checklogin.tsx";
 
@@ -20,7 +20,10 @@ export interface PublishProps {
   title: string;
   content: string;
   visibility: string;
-  imageUrls: string[];
+  imageUrls: [{
+    downloadUrl:string;
+    id:number;
+  }]
   tags: PopularTag[];
 }
 
@@ -35,7 +38,7 @@ const visibilityOptions: VisibilityOption[] = [
   { key: 'currentSchool', label: '校内可见', icon: '👥' }
 ];
 
-export function Publish() {
+function Publish() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -43,10 +46,13 @@ export function Publish() {
     title: '',
     content: '',
     visibility: 'all',
-    imageUrls: [],
+    imageUrls: [{
+      downloadUrl:"",
+      id:0
+    }],
     tags: []
   });
-  
+
   const [titlePass, setTitlePass] = useState<boolean>(true);
   const [contentPass, setContentPass] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -129,14 +135,21 @@ export function Publish() {
       // TODO: 调用图片上传接口
       console.log('上传图片:', file.name);
 
-      const response: CommonResponse = await ObjectUpload(formData)
+      const response: UploadImage = await ObjectUpload(formData)
 
       if (response.code == 200){
         // 模拟返回 URL
-        const mockImageUrl = `https://example.com/uploads/${Date.now()}_${file.name}`;
+        const downloadUrl:string = response.data.downloadUrl;
+        const id:number = response.data.id;
+
+        const image = {
+          downloadUrl:downloadUrl,
+          id:id
+        }
+
 
         // 更新状态
-        const newImageUrls = [...publish.imageUrls, mockImageUrl];
+        const newImageUrls = [...publish.imageUrls, image];
         setPublish({...publish, imageUrls: newImageUrls});
         setPreviewImages([...previewImages, URL.createObjectURL(file)]);
 
@@ -570,3 +583,5 @@ export function Publish() {
     </div>
   );
 }
+
+export default Publish
