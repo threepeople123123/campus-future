@@ -7,6 +7,7 @@ import PageIndex from "./pages/article/PageIndex.tsx"
 import Publish from "./pages/publish/Publish.tsx"
 import {AIChat} from "./pages/aiChat/AIChat.tsx"
 import ArticleDetail from "./pages/article/ArticleDetail.tsx"
+import UserDetail from "./pages/user/Detail.tsx"
 
 // 路由守卫组件：检查 token 是否存在
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -62,6 +63,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ArticleDetail />
+              </ProtectedRoute> as ReactNode
+            } 
+          />
+          <Route 
+            path="/userDetail" 
+            element={
+              <ProtectedRoute>
+                <UserDetail />
               </ProtectedRoute> as ReactNode
             } 
           />

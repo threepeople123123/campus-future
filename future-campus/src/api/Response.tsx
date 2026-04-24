@@ -6,7 +6,7 @@ export interface CommonResponse {
 
 export interface LoginResponse extends CommonResponse {
     data : {
-        userId: number;
+        id: number;
         email: string;
         userName: string;
         userHeadUrl: string;

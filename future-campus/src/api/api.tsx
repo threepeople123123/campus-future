@@ -7,7 +7,7 @@ import type {
   SchoolListResponse,
   ArticleRequest,
   RegisterRequest,
-  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse, AiChatRequest, Article,
+  ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse, AiChatRequest,
   ArticleDetailResponse, UploadImage
 } from "./Response.tsx";
 import type {PublishProps} from "../pages/publish/Publish.tsx";
@@ -42,7 +42,7 @@ export async function resetPasswordApi(resetPasswordRequest:ResetPasswordRequest
 /**
  * 获取用户信息
  */
-export async function getUserInfoApi() {
+export async function getUserInfoApi():Promise<LoginResponse>{
   return await api.get('/user/info');
 }
 
@@ -60,8 +60,8 @@ export async function getRSAKeyApi():Promise<RSAKeyResponse> {
 /**
  * 获取文章列表
  */
-export async function getArticlePageListApi(requestData: ArticleRequest):Promise<ArticleResponse> {
-  return await api.post('/article/pageList', requestData);
+export async function getArticlePageListApi(requestData: ArticleRequest):Promise<ArticlePageResponse> {
+  return await api.post('/article/pageListByUser', requestData);
 }
 
 /**
