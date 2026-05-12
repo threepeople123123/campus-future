@@ -11,6 +11,7 @@ import type {
   ArticleDetailResponse, UploadImage
 } from "./Response.tsx";
 import type {PublishProps} from "../pages/publish/Publish.tsx";
+import Cookies from "js-cookie";
 
 
 export interface CommonResponse {
@@ -214,12 +215,14 @@ export async function aiChatStream(
   const url = `${baseUrl}/ai/chat`;
   
   const abortController = new AbortController();
-  
+  const token = Cookies.get('token');
+
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        "token" : token
       },
       body: JSON.stringify(request),
       signal: abortController.signal
