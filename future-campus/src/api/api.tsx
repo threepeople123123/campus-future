@@ -8,7 +8,7 @@ import type {
   ArticleRequest,
   RegisterRequest,
   ResetPasswordRequest, PopularTag, LoginRes, ArticlePublishResponse, CommonResponse, AiChatRequest,
-  ArticleDetailResponse, UploadImage
+  ArticleDetailResponse, UploadImage, HistoryResponse
 } from "./Response.tsx";
 import type {PublishProps} from "../pages/publish/Publish.tsx";
 import Cookies from "js-cookie";
@@ -105,6 +105,10 @@ export async function publishArticle(publishProps :PublishProps):Promise<Article
 
 export async function ObjectUpload(formData:FormData):Promise<UploadImage>{
   return await api.put('/object/upload',formData);
+}
+
+export async function getHistoryConversation(pageNum:number , pageSize:number):Promise<HistoryResponse>{
+  return await api.get('/ai/getHistoryConversation', { params: { pageNum, pageSize } } );
 }
 
 

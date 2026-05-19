@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import {Button, TextArea} from '@heroui/react';
-import {aiChatStream} from "../../api/api.tsx";
-import type {AiChatRequest} from "../../api/Response.tsx";
+import {Button, TextArea,Description, Label, ListBox, ListLayout, Virtualizer} from '@heroui/react';
+import {aiChatStream, getHistoryConversation} from "../../api/api.tsx";
+import type {AiChatRequest, HistoryItem, HistoryResponse} from "../../api/Response.tsx";
 import {useNavigate} from "react-router-dom";
 import ReactMarkdown from 'react-markdown';
 
@@ -28,6 +28,7 @@ export function AIChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const [historyMsgs,setHistoryMsgs] = useState<HistoryItem[]>([])
 
   // 自动滚动到底部
   const scrollToBottom = () => {
@@ -38,10 +39,15 @@ export function AIChat() {
     scrollToBottom();
   }, [messages]);
 
+
+
   // 初始化 conversationId
   useEffect(() => {
     const newConversationId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     setConversationId(newConversationId);
+    getHistoryConversation(1, 10).then(res => {
+      setHistoryMsgs(res.data.records);
+    }).catch(console.error);
 
     return () => {
       if (abortControllerRef.current) {
@@ -131,6 +137,8 @@ export function AIChat() {
   };
 
   return (
+
+
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100 flex flex-col relative overflow-hidden">
       {/* 背景动画圆圈 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -162,6 +170,24 @@ export function AIChat() {
         </Button>
       </header>
 
+      {/*历史消息*/}
+      <Virtualizer layout={ListLayout} layoutOptions={{rowHeight: 50}}>
+        <ListBox
+            aria-label="Virtualized list with 1000 items"
+            className="h-[400px] w-[300px] overflow-y-auto"
+            items={historyMsgs}
+        >
+          {(msg) => (
+              <ListBox.Item id={msg.conversationId} textValue={msg.title}>
+                <div className="flex flex-col">
+                  <Label>{msg.title}</Label>
+                </div>
+                <ListBox.ItemIndicator/>
+              </ListBox.Item>
+          )}
+        </ListBox>
+      </Virtualizer>
+
       {/* 消息列表区域 */}
       <main className="relative z-10 flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-4 py-8">
@@ -175,7 +201,7 @@ export function AIChat() {
               </div>
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold text-gray-800">有什么可以帮您的?</h2>
-                <p className="text-gray-600">我是智慧校园AI助手,随时为您解答问题</p>
+                <p className="text-gray-600">我是未来校园AI助手,我可以帮助你搜索系统内文章,答疑解惑</p>
               </div>
 
               {/* 快捷提问卡片 */}
@@ -249,7 +275,7 @@ export function AIChat() {
                         )}
                       </div>
                     </div>
-                    
+
                     {/* 消息操作按钮(AI消息) */}
                     {message.role === 'ai' && (
                       <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -278,7 +304,7 @@ export function AIChat() {
                   </div>
                 </div>
               ))}
-              
+
               {/* 加载中指示器 */}
               {isLoading && (
                 <div className="flex gap-4 animate-fade-in">
@@ -296,7 +322,7 @@ export function AIChat() {
                   </div>
                 </div>
               )}
-              
+
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -318,7 +344,7 @@ export function AIChat() {
               maxRows={6}
               className="w-full bg-transparent border-0 resize-none px-4 py-3 pr-12 text-gray-800 placeholder-gray-500 focus:ring-0 focus:outline-none"
             />
-            
+
             {/* 发送按钮 */}
             <button
               onClick={handleSendMessage}
@@ -338,7 +364,7 @@ export function AIChat() {
               )}
             </button>
           </div>
-          
+
           {/* 底部提示文字 */}
           <p className="text-xs text-gray-600 text-center mt-3">
             AI生成内容仅供参考,请核实重要信息

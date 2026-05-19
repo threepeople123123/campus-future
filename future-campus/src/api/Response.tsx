@@ -136,3 +136,16 @@ export interface UploadImage extends  CommonResponse{
         id:string;
     }
 }
+
+export interface HistoryResponse extends CommonResponse{
+    data:{
+        records: HistoryItem[];
+        total:number;
+         size:number;
+         current:number;
+    }
+}
+export interface HistoryItem {
+    conversationId: string;
+    title: string;
+}
