@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {Button, TextArea,Description, Label, ListBox, ListLayout, Virtualizer} from '@heroui/react';
-import {aiChatStream, getHistoryConversation} from "../../api/api.tsx";
-import type {AiChatRequest, HistoryItem, HistoryResponse} from "../../api/Response.tsx";
+import {aiChatStream, getConversationMessage, getHistoryConversation} from "../../api/api.tsx";
+import type {AiChatRequest, HistoryItem, HistoryResponse, UserToBotConversation} from "../../api/Response.tsx";
 import {useNavigate} from "react-router-dom";
 import ReactMarkdown from 'react-markdown';
 
@@ -13,14 +13,7 @@ export interface Message {
 }
 
 export function AIChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: '你好！我是智慧校园AI助手，有什么可以帮助你的吗？',
-      role: 'ai',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +32,17 @@ export function AIChat() {
     scrollToBottom();
   }, [messages]);
 
-
+  function updateMessages(conversationId:string){
+     getConversationMessage(conversationId,1,100).then(res=>{
+       console.log(res)
+       if (res.code===200){
+         const records: Message[] = res.data.records;
+         setMessages(records)
+       }else {
+         alert(res.message)
+       }
+     })
+  }
 
   // 初始化 conversationId
   useEffect(() => {
@@ -176,6 +179,9 @@ export function AIChat() {
             aria-label="Virtualized list with 1000 items"
             className="h-[400px] w-[300px] overflow-y-auto"
             items={historyMsgs}
+            onAction={(key) =>{
+              updateMessages(key)
+            }}
         >
           {(msg) => (
               <ListBox.Item id={msg.conversationId} textValue={msg.title}>
@@ -191,7 +197,7 @@ export function AIChat() {
       {/* 消息列表区域 */}
       <main className="relative z-10 flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-4 py-8">
-          {messages.length === 1 && messages[0].role === 'ai' ? (
+          {messages.length === 0 ? (
             // 欢迎界面
             <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
               <div className="w-20 h-20 bg-sky-500/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4">

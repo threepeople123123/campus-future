@@ -1,4 +1,6 @@
 // 通用响应接口
+import type {Message} from "../pages/aiChat/AIChat.tsx";
+
 export interface CommonResponse {
     code: number;
     message: string;
@@ -148,4 +150,13 @@ export interface HistoryResponse extends CommonResponse{
 export interface HistoryItem {
     conversationId: string;
     title: string;
+}
+
+export interface UserToBotConversation extends  CommonResponse{
+    data:{
+        records: Message[];
+        total:number;
+        size:number;
+        current:number;
+    }
 }
