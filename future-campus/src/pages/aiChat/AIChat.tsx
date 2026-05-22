@@ -22,6 +22,7 @@ export function AIChat() {
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [historyMsgs,setHistoryMsgs] = useState<HistoryItem[]>([])
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   // 自动滚动到底部
   const scrollToBottom = () => {
@@ -142,7 +143,7 @@ export function AIChat() {
   return (
 
 
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100 flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-50 to-cyan-100 flex flex-col relative">
       {/* 背景动画圆圈 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-sky-200/30 rounded-full blur-3xl animate-pulse"></div>
@@ -173,30 +174,61 @@ export function AIChat() {
         </Button>
       </header>
 
-      {/*历史消息*/}
-      <Virtualizer layout={ListLayout} layoutOptions={{rowHeight: 50}}>
-        <ListBox
-            aria-label="Virtualized list with 1000 items"
-            className="h-[400px] w-[300px] overflow-y-auto"
-            items={historyMsgs}
-            onAction={(key) =>{
-              updateMessages(key)
-            }}
-        >
-          {(msg) => (
-              <ListBox.Item id={msg.conversationId} textValue={msg.title}>
-                <div className="flex flex-col">
-                  <Label>{msg.title}</Label>
-                </div>
-                <ListBox.ItemIndicator/>
-              </ListBox.Item>
-          )}
-        </ListBox>
-      </Virtualizer>
+      {/* 主要内容区域 - 左侧历史消息 + 右侧聊天 */}
+      <div className="relative z-10 flex flex-1">
+        {/* 历史消息侧边栏 */}
+        <aside className={`${isSidebarCollapsed ? 'w-0' : 'w-[300px]'} border-r border-white/30 backdrop-blur-xl bg-white/40 overflow-hidden transition-all duration-300 flex-shrink-0`}>
+          <div className="p-4 h-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">历史对话</h3>
+              <button 
+                onClick={() => setIsSidebarCollapsed(true)}
+                className="p-1.5 hover:bg-sky-500/10 rounded-lg transition-colors duration-200"
+                title="收起侧边栏"
+              >
+                <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+            </div>
+            <Virtualizer layout={ListLayout} layoutOptions={{rowHeight: 50}}>
+              <ListBox
+                  aria-label="历史对话列表"
+                  className="w-full"
+                  items={historyMsgs}
+                  onAction={(key) =>{
+                    updateMessages(key)
+                  }}
+              >
+                {(msg) => (
+                    <ListBox.Item id={msg.conversationId} textValue={msg.title}>
+                      <div className="flex flex-col">
+                        <Label>{msg.title}</Label>
+                      </div>
+                      <ListBox.ItemIndicator/>
+                    </ListBox.Item>
+                )}
+              </ListBox>
+            </Virtualizer>
+          </div>
+        </aside>
 
-      {/* 消息列表区域 */}
-      <main className="relative z-10 flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-8">
+        {/* 展开按钮 */}
+        {isSidebarCollapsed && (
+          <button 
+            onClick={() => setIsSidebarCollapsed(false)}
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 z-20 p-2 backdrop-blur-xl bg-white/60 border border-white/30 rounded-r-lg shadow-lg hover:bg-white/80 transition-all duration-200"
+            title="展开侧边栏"
+          >
+            <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
+
+        {/* 消息列表区域 */}
+        <main className="flex-1">
+          <div className="max-w-3xl mx-auto px-4 py-8">
           {messages.length === 0 ? (
             // 欢迎界面
             <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
@@ -332,12 +364,13 @@ export function AIChat() {
               <div ref={messagesEndRef} />
             </div>
           )}
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
 
       {/* 底部输入区域 */}
-      <footer className="relative z-10 border-t border-white/30 backdrop-blur-xl bg-white/40 px-4 py-4">
-        <div className="max-w-3xl mx-auto">
+      <footer className="relative z-10 border-t border-white/30 backdrop-blur-xl bg-white/40 py-4 transition-all duration-300">
+        <div className="max-w-3xl mx-auto px-4">
           <div className="relative backdrop-blur-xl bg-white/60 border border-white/30 rounded-2xl shadow-lg focus-within:border-sky-500/50 focus-within:shadow-xl transition-all duration-200">
             <TextArea
               ref={inputRef}
